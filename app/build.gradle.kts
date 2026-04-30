@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
-    kotlin("plugin.serialization") version "2.2.10"
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
@@ -27,8 +27,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         compose = true
@@ -36,6 +36,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.core:core-ktx:1.18.0")
     val mindustryVersion = "v157.4"
 
     implementation("androidx.core:core-ktx:1.10.1")
@@ -57,7 +58,5 @@ dependencies {
 
     implementation("com.github.Anuken.Mindustry:core:$mindustryVersion")
     implementation("com.github.Anuken.Arc:arc-core:$mindustryVersion")
-    implementation("org.jsoup:jsoup:1.22.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+
 }
