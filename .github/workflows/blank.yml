@@ -27,7 +27,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build mod apk
-        run: bash ./gradlew assemble
+        run: bash ./gradle assemble
 
       - name: List build outputs
         run: ls -la app/build/outputs/apk/
