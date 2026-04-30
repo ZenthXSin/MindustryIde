@@ -48,10 +48,6 @@ open class DocFetch {
 
     protected var progressCallback: ((Int, Int, Int, Int) -> Unit)? = null
 
-    open fun setProgressCallback(callback: (Int, Int, Int, Int) -> Unit) {
-        progressCallback = callback
-    }
-
     init {
         disableSslVerification()
         setupProxy()
