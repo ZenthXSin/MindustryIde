@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MindustryIdeApp() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
-
+    // 导航栏框架
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             AppDestinations.entries.forEach {
