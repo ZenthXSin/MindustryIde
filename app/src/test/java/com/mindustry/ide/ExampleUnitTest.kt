@@ -1,17 +1,16 @@
 package com.mindustry.ide
 
+import com.mindustry.ide.tool.json.Parser
+import mindustry.mod.ClassMap
 import org.junit.Test
+import arc.struct.ObjectMap
+import com.mindustry.ide.tool.libs.DocFetch
+import kotlinx.coroutines.runBlocking
 
-import org.junit.Assert.*
-
-/**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
 class ExampleUnitTest {
     @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+    fun test(): Unit = runBlocking {
+        val docFetch = DocFetch()
+        println(docFetch.execute())
     }
 }
