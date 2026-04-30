@@ -85,7 +85,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     )
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "1", showSystemUi = false, device = "id:pixel_5")
 @Composable
 fun GreetingPreview() {
     MindustryIdeTheme(darkTheme = true) {
