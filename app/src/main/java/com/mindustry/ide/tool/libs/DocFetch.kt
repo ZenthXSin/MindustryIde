@@ -5,7 +5,6 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jsoup.Jsoup
-import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
@@ -101,13 +100,13 @@ open class DocFetch {
 
     protected open fun saveTypeMeta(meta: TypeMeta) {
         TODO("对于Android的适配")
-        val filePath = "./out/types/${meta.type}.json"
-        val file = File(filePath)
-        file.parentFile?.mkdirs()
-        file.writeText(kotlinx.serialization.json.Json {
-            prettyPrint = true
-            ignoreUnknownKeys = true
-        }.encodeToString(TypeMeta.serializer(), meta))
+//        val filePath = "./out/types/${meta.type}.json"
+//        val file = File(filePath)
+//        file.parentFile?.mkdirs()
+//        file.writeText(kotlinx.serialization.json.Json {
+//            prettyPrint = true
+//            ignoreUnknownKeys = true
+//        }.encodeToString(TypeMeta.serializer(), meta))
     }
 
     protected open suspend fun fetchAllMeta(docs: List<WikiDoc>): List<TypeMeta?> {
