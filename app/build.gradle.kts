@@ -35,6 +35,8 @@ android {
 }
 
 dependencies {
+    val mindustryVersion = "v157.4"
+
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.activity:activity-compose:1.8.0")
@@ -51,4 +53,8 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    implementation("com.github.Anuken.Mindustry:core:$mindustryVersion")
+    implementation("com.github.Anuken.Arc:arc-core:$mindustryVersion")
+
 }
