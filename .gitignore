@@ -2518,5 +2518,4 @@
 /node_modules/.package-lock.json
 /package.json
 /package-lock.json
-/build/reports/problems
-build/reports/problems/problems-report.html
+/build
