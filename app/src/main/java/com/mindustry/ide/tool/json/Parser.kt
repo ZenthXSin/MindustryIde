@@ -1,15 +1,17 @@
 package com.mindustry.ide.tool.json
 
 import mindustry.mod.ClassMap
+import java.io.File
 
 abstract class Parser {
-    abstract fun write()
-    abstract fun read()
+    abstract fun write(路径: File,内容: String): Boolean
+    abstract fun read(路径: File): String
     abstract fun hasConfig(): Boolean
 
     fun load() {
         if (hasConfig()) {
-            read()
+            //你TODO一下
+            read(File(""))
         } else {
 
         }
