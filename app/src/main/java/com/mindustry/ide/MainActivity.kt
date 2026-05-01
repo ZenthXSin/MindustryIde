@@ -18,21 +18,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.AlertDialogDefaults.containerColor
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItemDefaults.contentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
@@ -45,11 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
@@ -62,15 +49,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        Vars.init(this)  // 初始化全局变量（加载配置）
         setContent {
             MindustryIdeTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = colorScheme.background
-                ) {
-                    MindustryIdeApp()
-                }
+                MindustryIdeApp()
             }
         }
     }
@@ -118,9 +99,6 @@ fun MindustryIdeApp() {
 
     // 导航栏框架
     NavigationSuiteScaffold(
-        containerColor = colorScheme.surface,
-        contentColor = colorScheme.onSurface,
-        //modifier = Modifier.background(MaterialTheme.colorScheme.surface),
         navigationSuiteItems = {
             AppDestinations.entries.forEach {
                 item(
@@ -137,10 +115,12 @@ fun MindustryIdeApp() {
             }
         }
     ) {
-        首页内容(
-            name = "Android"
-        )
-
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            Greeting(
+                name = "Android",
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
     }
 }
 
@@ -290,12 +270,7 @@ fun 首页内容(name: String) {
 @Preview(showBackground = true, name = "1", showSystemUi = false, device = "id:pixel_5")
 @Composable
 fun GreetingPreview() {
-    MindustryIdeTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            MindustryIdeApp()
-        }
+    MindustryIdeTheme(darkTheme = true) {
+        Greeting("Android")
     }
 }
