@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        Vars.init(this)  // 初始化全局变量（加载配置）
         setContent {
             MindustryIdeTheme {
                 Surface(
