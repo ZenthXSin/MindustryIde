@@ -177,8 +177,9 @@ fun 首页内容(name: String) {
                             modifier = columnModifier
                         )
                     }
+
                     // 垂直占位 (高度)
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Column(
                         modifier = Modifier
@@ -192,6 +193,9 @@ fun 首页内容(name: String) {
                         val rowModifier = buttonsModifier.padding(horizontal = 4.dp)
                             .height(128.dp)
                         //Spacer(modifier = Modifier.height(32.dp))
+                        分割线()
+                        // 垂直占位 (高度)
+                        Spacer(modifier = Modifier.height(16.dp))
                         Row(modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
