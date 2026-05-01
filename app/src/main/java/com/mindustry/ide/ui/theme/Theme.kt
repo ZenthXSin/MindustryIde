@@ -44,9 +44,7 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun MindustryIdeTheme(
-    darkTheme: Boolean = true,
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
+    darkTheme: Boolean = true, dynamicColor: Boolean = false, content: @Composable () -> Unit
 ) {
     val colorScheme = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         val context = LocalContext.current
@@ -56,8 +54,6 @@ fun MindustryIdeTheme(
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
+        colorScheme = colorScheme, typography = Typography, content = content
     )
 }
