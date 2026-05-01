@@ -2519,3 +2519,4 @@
 /package.json
 /package-lock.json
 /build/reports/problems
+build/reports/problems/problems-report.html
