@@ -1,5 +1,6 @@
 package com.mindustry.ide.tool.json
 
+import arc.struct.Seq
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
@@ -16,22 +17,10 @@ data class TypeMeta(val type: String, val parentType: String, val fields: List<F
 abstract class Parser {
     protected val classDocs = mutableMapOf<String, TypeMeta>()
     protected val fieldDocs = mutableMapOf<String, MutableMap<String, FieldMeta>>()
-    
+    protected val classMap = ClassMap()
+
     companion object {
         private val jsonFormat = Json { ignoreUnknownKeys = true }
-    }
-
-    abstract fun write()
-    abstract fun read()
-    abstract fun hasConfig(): Boolean
-
-    fun load() {
-        if (hasConfig()) {
-            read()
-        } else {
-            write()
-            read()
-        }
     }
 
     fun getFieldDoc(className: String, fieldName: String): String? {
