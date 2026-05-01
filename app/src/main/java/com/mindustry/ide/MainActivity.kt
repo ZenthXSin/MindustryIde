@@ -4,80 +4,45 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.AlertDialogDefaults.containerColor
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItemDefaults.contentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
-import com.mindustry.ide.ui.component.MindustryTextButton
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
-import androidx.compose.ui.unit.dp
 import com.mindustry.ide.ui.theme.MindustryIdeTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        Vars.init(this)  // 初始化全局变量（加载配置）
         setContent {
             MindustryIdeTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = colorScheme.background
-                ) {
-                    MindustryIdeApp()
-                }
+                MindustryIdeApp()
             }
         }
     }
 }
 
-//@PreviewScreenSizes
+@PreviewScreenSizes
 @Composable
 fun MindustryIdeApp() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
     // 导航栏框架
     NavigationSuiteScaffold(
-        containerColor = colorScheme.surface,
-        contentColor = colorScheme.onSurface,
-        //modifier = Modifier.background(MaterialTheme.colorScheme.surface),
         navigationSuiteItems = {
             AppDestinations.entries.forEach {
                 item(
@@ -94,10 +59,12 @@ fun MindustryIdeApp() {
             }
         }
     ) {
-        首页内容(
-            name = "Android"
-        )
-
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            Greeting(
+                name = "Android",
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
     }
 }
 
@@ -111,152 +78,17 @@ enum class AppDestinations(
 }
 
 @Composable
-fun 首页内容(name: String) {
-    Scaffold(
-        containerColor = colorScheme.surface,
-        contentColor = colorScheme.onSurface,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-    ) { innerPadding ->
-        // 竖列菜单
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(8.dp)
-                .fillMaxWidth()
-                .fillMaxHeight()
-
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(colorScheme.surface)
-            ) {
-                Text(
-                    text = "Hello $name!",
-                    modifier = Modifier
-                )
-            }
-            分割线()
-            Box(
-                modifier = Modifier
-                    .background(colorScheme.background)
-                    .fillMaxWidth()
-                    // 沉底但是不挤压占位空白喵~
-                    .weight(1f),// 所有子项水平居中
-                contentAlignment = Alignment.TopCenter
-            ) {
-                val buttonsModifier = Modifier
-                    .fillMaxWidth()
-                Column(
-
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .padding(8.dp),
-                        // 所有子项水平居中
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        // 项间距
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        val columnModifier = buttonsModifier.padding(horizontal = 16.dp)
-                        Row(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        ) { Text("怎么办?") }
-
-                        MindustryTextButton(
-                            "QQ", onClick = {},
-                            useTechFont = false,
-                            modifier = columnModifier
-                        )
-                        MindustryTextButton(
-                            "BliBli", onClick = {},
-                            useTechFont = false,
-                            modifier = columnModifier
-                        )
-                    }
-
-                    // 垂直占位 (高度)
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Column(
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .padding(4.dp),
-                        // 所有子项水平居中
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        // 项间距
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        val rowModifier = buttonsModifier.padding(horizontal = 4.dp)
-                            .height(128.dp)
-                        //Spacer(modifier = Modifier.height(32.dp))
-                        分割线()
-                        // 垂直占位 (高度)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        ) { Text("开始吧.") }
-                        Row(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        ) {
-                            val context = LocalContext.current
-                            val addIcon = remember {
-                                BitmapFactory.decodeStream(context.assets.open("mdtRawAssets/icons/add.png")).asImageBitmap()
-                            }
-                            val folderIcon = remember {
-                                BitmapFactory.decodeStream(context.assets.open("mdtRawAssets/icons/folder.png")).asImageBitmap()
-                            }
-                            MindustryTextButton(
-                                "开始", onClick = {},
-                                modifier = rowModifier.weight(1f),
-                                icon = addIcon
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            MindustryTextButton(
-                                "打开工程", onClick = {},
-                                modifier = rowModifier.weight(1f),
-                                icon = folderIcon
-                            )
-                        }
-
-
-                    }
-
-                }
-            }
-        }
-
-
-
-    }
-
-}
-@Composable
-fun 分割线(){
-    HorizontalDivider(
-        modifier = Modifier
-            .padding(vertical = 8.dp)
-            .background(MaterialTheme.colorScheme.surface),
-        thickness = 1.dp,       // 线粗细
-        color = MaterialTheme.colorScheme.outlineVariant // 颜色
+fun Greeting(name: String, modifier: Modifier = Modifier) {
+    Text(
+        text = "Hello $name!",
+        modifier = modifier
     )
 }
 
 @Preview(showBackground = true, name = "1", showSystemUi = false, device = "id:pixel_5")
 @Composable
 fun GreetingPreview() {
-    MindustryIdeTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            MindustryIdeApp()
-        }
+    MindustryIdeTheme(darkTheme = true) {
+        Greeting("Android")
     }
 }
