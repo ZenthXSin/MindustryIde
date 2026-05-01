@@ -1,6 +1,7 @@
 package com.mindustry.ide.tool.json
 
 import arc.struct.Seq
+import java.io.File
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
@@ -54,5 +55,9 @@ abstract class Parser {
         meta.fields.forEach { field ->
             fieldMap[field.name] = field
         }
+    }
+
+    open fun load() {
+
     }
 }
