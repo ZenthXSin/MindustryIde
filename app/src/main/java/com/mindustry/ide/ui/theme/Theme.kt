@@ -10,15 +10,36 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
     primary = IdeaDarkPrimary,
+    onPrimary = IdeaDarkOnPrimary,
+    primaryContainer = IdeaDarkPrimary.copy(alpha = 0.2f),
+    onPrimaryContainer = IdeaDarkPrimary,
+
     secondary = IdeaDarkSecondary,
-    tertiary = IdeaDarkPrimary,
+    onSecondary = IdeaDarkOnSecondary,
+    secondaryContainer = IdeaDarkSecondary.copy(alpha = 0.2f),
+    onSecondaryContainer = IdeaDarkSecondary,
+
+    tertiary = IdeaDarkTertiary,
+    onTertiary = IdeaDarkOnTertiary,
+
     background = IdeaDarkBackground,
-    surface = IdeaDarkSurface,
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
     onBackground = IdeaDarkOnBackground,
-    onSurface = IdeaDarkText,
+
+    surface = IdeaDarkSurface,
+    onSurface = IdeaDarkOnSurface,
+    surfaceVariant = IdeaDarkSurfaceVariant,
+    onSurfaceVariant = IdeaDarkOnSurfaceVariant,
+
+    error = IdeaDarkError,
+    onError = Color.White,
+
+    outline = IdeaDarkOutline,
+    outlineVariant = IdeaDarkOutlineVariant,
+
+    inverseSurface = IdeaDarkInverseSurface,
+    inverseOnSurface = IdeaDarkInverseOnSurface,
+
+    scrim = Color.Black,
 )
 
 @Composable
