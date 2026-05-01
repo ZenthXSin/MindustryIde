@@ -35,7 +35,7 @@ android {
         compose = true
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 }
 
