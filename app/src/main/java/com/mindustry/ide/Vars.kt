@@ -17,7 +17,7 @@ class AndroidJsonParser(
 }
 
 object Vars {
-    lateinit var parser: AndroidJsonParser
+    var parser: JsonParser = JsonParser()
 
     fun init(context: Context) {
         parser = AndroidJsonParser(context.applicationContext.filesDir)

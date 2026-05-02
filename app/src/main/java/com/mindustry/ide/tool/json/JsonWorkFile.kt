@@ -34,8 +34,22 @@ import mindustry.world.draw.DrawMulti
 import mindustry.world.draw.DrawTurret
 import mindustry.world.meta.Env
 import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 import kotlin.jvm.java
 
+
+/**
+ * 判断 Field 是否参与 Arc Json 反序列化
+ * 规则来自 arc/util/serialization/Json#getFields()
+ */
+fun Field.isMust(): Boolean {
+    if (!this.type.isPrimitive) return false
+    if (Modifier.isTransient(modifiers)) return false
+    if (Modifier.isStatic(modifiers)) return false
+    if (isSynthetic) return false
+    if (Modifier.isFinal(modifiers)) return false  // readFields 时无法 set
+    return true
+}
 class JsonWorkFile(var classBuild: ClassBuild) : WorkFile() {
     override fun import(content: String) {
         TODO("Not yet implemented")
@@ -70,10 +84,11 @@ class ClassBuild(
 class FieldBuild(
     var field: Field,
     var classData: Class<*>,
-    var must: Boolean = field.type.isPrimitive,
+    var must: Boolean = field.type.isPrimitive && field.isDeserializable(),
     var doc: String = Vars.parser.getFieldDoc(classData.name, field.name)
 ) {
-    var value = getValue()
+    var index = getValue()
+
     companion object {
         val defaultValues = mapOf(
             Int::class.java to { 0 },
