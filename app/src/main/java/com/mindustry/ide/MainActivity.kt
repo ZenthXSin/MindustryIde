@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Favorite
@@ -46,12 +47,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import com.mindustry.ide.ui.component.MdtButton
-import com.mindustry.ide.ui.component.MdtTextButton
 import com.mindustry.ide.ui.theme.MindustryIdeTheme
 
 class MainActivity : ComponentActivity() {
@@ -201,16 +202,18 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                                 .padding(horizontal = 16.dp),
                         ) { Text("怎么办?") }
 
-                        MdtTextButton(
-                            "QQ", onClick = {},
-                            useTechFont = false,
+                        MdtButton(
+                            onClick = {},
                             modifier = columnModifier
-                        )
-                        MdtTextButton(
-                            "BliBli", onClick = {},
-                            useTechFont = false,
+                        ) {
+                            Text("QQ", fontFamily = FontFamily.SansSerif)
+                        }
+                        MdtButton(
+                            onClick = {},
                             modifier = columnModifier
-                        )
+                        ) {
+                            Text("BliBli", fontFamily = FontFamily.SansSerif)
+                        }
 
                         // 垂直占位 (高度)
                         Spacer(modifier = Modifier.height(16.dp))
@@ -242,25 +245,61 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                                     .padding(horizontal = 16.dp),
                             ) {
                                 val context = LocalContext.current
+                                val pixelOptions = android.graphics.BitmapFactory.Options().apply {
+                                    inScaled = false        // 禁止按密度缩放
+                                    inDither = false        // 关闭抖动
+                                }
                                 val addIcon = remember {
-                                    BitmapFactory.decodeStream(context.assets.open("mdtRawAssets/icons/add.png"))
-                                        .asImageBitmap()
+                                    BitmapFactory.decodeStream(
+                                        context.assets.open("mdtRawAssets/icons/add.png"),
+                                        null, pixelOptions
+                                    )?.asImageBitmap()
                                 }
                                 val folderIcon = remember {
-                                    BitmapFactory.decodeStream(context.assets.open("mdtRawAssets/icons/folder.png"))
-                                        .asImageBitmap()
+                                    BitmapFactory.decodeStream(
+                                        context.assets.open("mdtRawAssets/icons/folder.png"),
+                                        null, pixelOptions
+                                    )?.asImageBitmap()
                                 }
-                                MdtTextButton(
-                                    "开始", onClick = {},
-                                    modifier = rowModifier.weight(1f),
-                                    icon = addIcon
-                                )
+                                MdtButton(
+                                    onClick = {},
+                                    modifier = rowModifier.weight(1f)
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        if (addIcon != null) {
+                                            androidx.compose.foundation.Image(
+                                                bitmap = addIcon,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(28.dp),
+                                                contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                            )
+                                        }
+                                        Text("开始")
+                                    }
+                                }
                                 Spacer(modifier = Modifier.width(8.dp))
-                                MdtTextButton(
-                                    "打开工程", onClick = {},
-                                    modifier = rowModifier.weight(1f),
-                                    icon = folderIcon
-                                )
+                                MdtButton(
+                                    onClick = {},
+                                    modifier = rowModifier.weight(1f)
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        if (folderIcon != null) {
+                                            androidx.compose.foundation.Image(
+                                                bitmap = folderIcon,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(28.dp),
+                                                contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                            )
+                                        }
+                                        Text("打开工程")
+                                    }
+                                }
                             }
 
 

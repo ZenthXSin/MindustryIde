@@ -1,4 +1,4 @@
-package com.mindustry.ide.ui.component
+﻿package com.mindustry.ide.ui.component
 
 
 import androidx.compose.foundation.Canvas
@@ -24,13 +24,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mindustry.ide.ui.theme.MindustryAccent
@@ -142,57 +139,3 @@ fun MdtButton(
         }
     }
 }
-
-// ========== 文本变体 ==========
-
-@Composable
-fun MdtTextButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    colors: MdtButtonColors = MdtButtonDefaultColors,
-    useTechFont: Boolean = true,
-    icon: ImageBitmap? = null,
-) {
-    MdtButton(
-        onClick = onClick,
-        modifier = modifier,
-        enabled = enabled,
-        colors = colors,
-    ) {
-        if (icon != null) {
-            androidx.compose.foundation.layout.Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)
-            ) {
-                androidx.compose.foundation.Image(
-                    bitmap = icon,
-                    contentDescription = null,
-                    modifier = androidx.compose.ui.Modifier.size(28.dp),
-                    contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                )
-                Text(
-                    text = text,
-                    color = if (enabled) Color.White else Color.White.copy(alpha = DisabledContentAlpha),
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontFamily = if (useTechFont) com.mindustry.ide.ui.theme.MindustryFontFamily else FontFamily.SansSerif
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        } else {
-            Text(
-                text = text,
-                color = if (enabled) Color.White else Color.White.copy(alpha = DisabledContentAlpha),
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontFamily = if (useTechFont) com.mindustry.ide.ui.theme.MindustryFontFamily else FontFamily.SansSerif
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
