@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
 import mindustry.mod.ClassMap
+import java.io.File
 
 @OptIn(InternalSerializationApi::class)
 @Serializable
@@ -67,7 +68,7 @@ open class JsonParser {
         }
     }
 
-    open fun load() {
-
+    open fun load(路径: File): kotlinx.serialization.json.JsonElement? {
+        return TODO("提供返回值")
     }
 }
