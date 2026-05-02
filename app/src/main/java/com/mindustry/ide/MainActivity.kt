@@ -34,11 +34,13 @@ import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,10 +56,13 @@ import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import com.mindustry.ide.ui.component.MdtButton
 import com.mindustry.ide.ui.theme.MindustryIdeTheme
+import com.mindustry.ide.AndroidLog
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Vars.init(this)
+
         enableEdgeToEdge()
         setContent {
             MindustryIdeTheme {
@@ -72,9 +77,9 @@ fun 分割线() {
     HorizontalDivider(
         modifier = Modifier
             .padding(vertical = 8.dp)
-            .background(MaterialTheme.colorScheme.surface),
+            .background(colorScheme.surface),
         thickness = 1.dp,       // 线粗细
-        color = MaterialTheme.colorScheme.outlineVariant // 颜色
+        color = colorScheme.surface // 颜色
     )
 }
 
@@ -107,6 +112,26 @@ fun MindustryIdeApp() {
         }
     }
 
+    // 全局错误状态 — 由 AndroidLog.log() 触发
+    var errorTag by remember { mutableStateOf("") }
+    var errorMsg by remember { mutableStateOf("") }
+    var hasError by remember { mutableStateOf(false) }
+
+    // 注册 AndroidLog 回调
+    DisposableEffect(Unit) {
+        AndroidLog.onError = { tag, msg ->
+            errorTag = tag
+            errorMsg = msg
+            hasError = true
+        }
+        onDispose {
+            AndroidLog.onError = null
+        }
+    }
+
+    if (hasError) {
+        ErrorPage(tag = errorTag, msg = errorMsg)
+    } else {
     // 导航栏框架
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -125,13 +150,17 @@ fun MindustryIdeApp() {
             }
         }
     ) {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = colorScheme.surface
+        ) { innerPadding ->
             Greeting(
                 name = "Android",
                 modifier = Modifier.padding(innerPadding)
             )
         }
     }
+    } // if-else
 }
 
 enum class AppDestinations(
@@ -172,6 +201,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 // 沉底但是不挤压占位空白喵~
                 .weight(1f),// 所有子项水平居中
+
             contentAlignment = Alignment.TopCenter
         ) {
             val buttonsModifier = Modifier
@@ -253,7 +283,9 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                                 )?.asImageBitmap()
                             }
                             MdtButton(
-                                onClick = {},
+                                onClick = {
+                                    AndroidLog.log("Mdt", "点击了开始")
+                                },
                                 modifier = rowModifier.weight(1f)
                             ) {
                                 Column(
@@ -306,10 +338,10 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 }
 
 
-@Preview(showBackground = true, name = "1", showSystemUi = false, device = "id:pixel_5")
+@Preview(showBackground = true, backgroundColor = 0xFF000000, name = "1", showSystemUi = true, device = "id:pixel_5")
 @Composable
 fun GreetingPreview() {
     MindustryIdeTheme(darkTheme = true) {
-        Greeting("Android")
+        MindustryIdeApp()
     }
 }
