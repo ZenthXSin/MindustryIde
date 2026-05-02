@@ -47,8 +47,16 @@ data class WorkFileData(
     }
 }
 
-data open class WorkFile(var data: WorkFileData = WorkFileData()) {
+open class WorkFile(var data: WorkFileData = WorkFileData()) {
     open fun load(json: String) {
-        
+        data = Json.decodeFromString<WorkFileData>(json)//反序列化
+    }
+
+    open fun export(): String {
+        return data.content
+    }
+
+    fun import(content: String) {
+        TODO("导入项目")
     }
 }
