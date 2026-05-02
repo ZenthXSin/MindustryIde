@@ -34,11 +34,13 @@ import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,10 +56,13 @@ import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import com.mindustry.ide.ui.component.MdtButton
 import com.mindustry.ide.ui.theme.MindustryIdeTheme
+import com.mindustry.ide.AndroidLog
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Vars.init(this)
+
         enableEdgeToEdge()
         setContent {
             MindustryIdeTheme {
@@ -72,9 +77,9 @@ fun 分割线() {
     HorizontalDivider(
         modifier = Modifier
             .padding(vertical = 8.dp)
-            .background(MaterialTheme.colorScheme.surface),
+            .background(colorScheme.surface),
         thickness = 1.dp,       // 线粗细
-        color = MaterialTheme.colorScheme.outlineVariant // 颜色
+        color = colorScheme.surface // 颜色
     )
 }
 
@@ -107,6 +112,26 @@ fun MindustryIdeApp() {
         }
     }
 
+    // 全局错误状态 — 由 AndroidLog.log() 触发
+    var errorTag by remember { mutableStateOf("") }
+    var errorMsg by remember { mutableStateOf("") }
+    var hasError by remember { mutableStateOf(false) }
+
+    // 注册 AndroidLog 回调
+    DisposableEffect(Unit) {
+        AndroidLog.onError = { tag, msg ->
+            errorTag = tag
+            errorMsg = msg
+            hasError = true
+        }
+        onDispose {
+            AndroidLog.onError = null
+        }
+    }
+
+    if (hasError) {
+        ErrorPage(tag = errorTag, msg = errorMsg)
+    } else {
     // 导航栏框架
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -125,13 +150,17 @@ fun MindustryIdeApp() {
             }
         }
     ) {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = colorScheme.surface
+        ) { innerPadding ->
             Greeting(
                 name = "Android",
                 modifier = Modifier.padding(innerPadding)
             )
         }
     }
+    } // if-else
 }
 
 enum class AppDestinations(
@@ -146,180 +175,173 @@ enum class AppDestinations(
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     val colorScheme = MaterialTheme.colorScheme
-    Scaffold(
-        containerColor = colorScheme.surface,
-        contentColor = colorScheme.onSurface,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-    ) { innerPadding ->
-        // 竖列菜单
-        Column(
+    // 上面已经把innerPadding加上了, 这边直接用modifier就行了
+    // 竖列菜单
+    Column(
+        modifier = modifier
+            .padding(8.dp)
+            .fillMaxWidth()
+            .fillMaxHeight()
+
+    ) {
+        Box(
             modifier = Modifier
-                .padding(innerPadding)
-                .padding(8.dp)
                 .fillMaxWidth()
-                .fillMaxHeight()
-
+                .background(colorScheme.surface)
         ) {
-            Box(
+            Text(
+                text = "Hello $name!",
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(colorScheme.surface)
-            ) {
-                Text(
-                    text = "Hello $name!",
-                    modifier = Modifier
-                )
-            }
-            分割线()
-            Box(
-                modifier = Modifier
-                    .background(colorScheme.background)
-                    .fillMaxWidth()
-                    // 沉底但是不挤压占位空白喵~
-                    .weight(1f),// 所有子项水平居中
-                contentAlignment = Alignment.TopCenter
-            ) {
-                val buttonsModifier = Modifier
-                    .fillMaxWidth()
-                Column(
+            )
+        }
+        分割线()
+        Box(
+            modifier = Modifier
+                .background(colorScheme.background)
+                .fillMaxWidth()
+                // 沉底但是不挤压占位空白喵~
+                .weight(1f),// 所有子项水平居中
 
+            contentAlignment = Alignment.TopCenter
+        ) {
+            val buttonsModifier = Modifier
+                .fillMaxWidth()
+            Column(
+
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(8.dp),
+                    // 所有子项水平居中
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    // 项间距
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    val columnModifier = buttonsModifier.padding(horizontal = 16.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                    ) { Text("怎么办?") }
+
+                    MdtButton(
+                        onClick = {},
+                        modifier = columnModifier
+                    ) {
+                        Text("QQ", fontFamily = FontFamily.SansSerif)
+                    }
+                    MdtButton(
+                        onClick = {},
+                        modifier = columnModifier
+                    ) {
+                        Text("BliBli", fontFamily = FontFamily.SansSerif)
+                    }
+
+                    // 垂直占位 (高度)
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Column(
                         modifier = Modifier
-                            .padding(innerPadding)
-                            .padding(8.dp),
+                            .padding(4.dp),
                         // 所有子项水平居中
                         horizontalAlignment = Alignment.CenterHorizontally,
                         // 项间距
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        val columnModifier = buttonsModifier.padding(horizontal = 16.dp)
+                        val rowModifier = buttonsModifier
+                            .padding(horizontal = 4.dp)
+                            .height(128.dp)
+                        //Spacer(modifier = Modifier.height(32.dp))
+                        分割线()
+                        // 垂直占位 (高度)
+                        Spacer(modifier = Modifier.height(16.dp))
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
-                        ) { Text("怎么办?") }
-
-                        MdtButton(
-                            onClick = {},
-                            modifier = columnModifier
-                        ) {
-                            Text("QQ", fontFamily = FontFamily.SansSerif)
-                        }
-                        MdtButton(
-                            onClick = {},
-                            modifier = columnModifier
-                        ) {
-                            Text("BliBli", fontFamily = FontFamily.SansSerif)
-                        }
-
-                        // 垂直占位 (高度)
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Column(
+                        ) { Text("开始吧.") }
+                        Row(
                             modifier = Modifier
-                                .padding(innerPadding)
-                                .padding(4.dp),
-                            // 所有子项水平居中
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            // 项间距
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
                         ) {
-                            val rowModifier = buttonsModifier
-                                .padding(horizontal = 4.dp)
-                                .height(128.dp)
-                            //Spacer(modifier = Modifier.height(32.dp))
-                            分割线()
-                            // 垂直占位 (高度)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                            ) { Text("开始吧.") }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
+                            val context = LocalContext.current
+                            val pixelOptions = android.graphics.BitmapFactory.Options().apply {
+                                inScaled = false        // 禁止按密度缩放
+                                inDither = false        // 关闭抖动
+                            }
+                            val addIcon = remember {
+                                BitmapFactory.decodeStream(
+                                    context.assets.open("mdtRawAssets/icons/add.png"),
+                                    null, pixelOptions
+                                )?.asImageBitmap()
+                            }
+                            val folderIcon = remember {
+                                BitmapFactory.decodeStream(
+                                    context.assets.open("mdtRawAssets/icons/folder.png"),
+                                    null, pixelOptions
+                                )?.asImageBitmap()
+                            }
+                            MdtButton(
+                                onClick = {
+                                    AndroidLog.log("Mdt", "点击了开始")
+                                },
+                                modifier = rowModifier.weight(1f)
                             ) {
-                                val context = LocalContext.current
-                                val pixelOptions = android.graphics.BitmapFactory.Options().apply {
-                                    inScaled = false        // 禁止按密度缩放
-                                    inDither = false        // 关闭抖动
-                                }
-                                val addIcon = remember {
-                                    BitmapFactory.decodeStream(
-                                        context.assets.open("mdtRawAssets/icons/add.png"),
-                                        null, pixelOptions
-                                    )?.asImageBitmap()
-                                }
-                                val folderIcon = remember {
-                                    BitmapFactory.decodeStream(
-                                        context.assets.open("mdtRawAssets/icons/folder.png"),
-                                        null, pixelOptions
-                                    )?.asImageBitmap()
-                                }
-                                MdtButton(
-                                    onClick = {},
-                                    modifier = rowModifier.weight(1f)
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        if (addIcon != null) {
-                                            androidx.compose.foundation.Image(
-                                                bitmap = addIcon,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(28.dp),
-                                                contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                                            )
-                                        }
-                                        Text("开始")
+                                    if (addIcon != null) {
+                                        androidx.compose.foundation.Image(
+                                            bitmap = addIcon,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(28.dp),
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                        )
                                     }
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                MdtButton(
-                                    onClick = {},
-                                    modifier = rowModifier.weight(1f)
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        if (folderIcon != null) {
-                                            androidx.compose.foundation.Image(
-                                                bitmap = folderIcon,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(28.dp),
-                                                contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                                            )
-                                        }
-                                        Text("打开工程")
-                                    }
+                                    Text("开始")
                                 }
                             }
-
-
+                            Spacer(modifier = Modifier.width(8.dp))
+                            MdtButton(
+                                onClick = {},
+                                modifier = rowModifier.weight(1f)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    if (folderIcon != null) {
+                                        androidx.compose.foundation.Image(
+                                            bitmap = folderIcon,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(28.dp),
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                        )
+                                    }
+                                    Text("打开工程")
+                                }
+                            }
                         }
 
+
                     }
+
                 }
             }
-
-
         }
 
+
     }
+
 }
 
 
-@Preview(showBackground = true, name = "1", showSystemUi = false, device = "id:pixel_5")
+@Preview(showBackground = true, backgroundColor = 0xFF000000, name = "1", showSystemUi = true, device = "id:pixel_5")
 @Composable
 fun GreetingPreview() {
     MindustryIdeTheme(darkTheme = true) {
-        Greeting("Android")
+        MindustryIdeApp()
     }
 }
