@@ -73,8 +73,9 @@ class FieldBuild(
     var must: Boolean = field.type.isPrimitive,
     var doc: String = Vars.parser.getFieldDoc(classData.name, field.name)
 ) {
+    var value = getValue()
     companion object {
-        val defaultValues = mapOf<Class<*>, () -> Any>(
+        val defaultValues = mapOf(
             Int::class.java to { 0 },
             Float::class.java to { 0f },
             Double::class.java to { 0.0 },
@@ -117,16 +118,16 @@ class FieldBuild(
         }
     }
 
-    fun getDefaultValue(): DefaultValue {
+    fun getValue(): Value {
         defaultValues[field.type]?.let { factory ->
-            return DefaultValue(factory(), field.type)
+            return Value(factory(), field.type)
         }
 
         findRegisteredInstance()?.let { instance ->
-            return DefaultValue(instance, field.type)
+            return Value(instance, field.type)
         }
 
-        return DefaultValue(null, null)
+        return Value(null, null)
     }
 
     private fun findRegisteredInstance(): Any? {
@@ -140,4 +141,4 @@ class FieldBuild(
     }
 }
 
-data class DefaultValue(val value: Any?, val type: Class<*>?)
+data class Value(var value: Any?, var type: Class<*>?)

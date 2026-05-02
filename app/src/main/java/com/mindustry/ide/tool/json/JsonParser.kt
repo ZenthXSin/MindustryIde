@@ -1,8 +1,6 @@
 package com.mindustry.ide.tool.json
 
 import arc.struct.ObjectMap
-import arc.struct.Seq
-import java.io.File
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
@@ -16,7 +14,7 @@ data class FieldMeta(val name: String, val type: String, val defaultValue: Strin
 @Serializable
 data class TypeMeta(val type: String, val parentType: String, val fields: List<FieldMeta>)
 
-abstract class Parser {
+open class JsonParser {
     val classDocs = mutableMapOf<String, TypeMeta>()
     val fieldDocs = mutableMapOf<String, MutableMap<String, FieldMeta>>()
     val classMap: ObjectMap<String?, Class<*>?>? = ClassMap.classes
