@@ -47,6 +47,8 @@ data class WorkFileData(
     }
 }
 
-data class WorkFile(var data: WorkFileData = WorkFileData()) {
-
+data open class WorkFile(var data: WorkFileData = WorkFileData()) {
+    open fun load(json: String) {
+        
+    }
 }
