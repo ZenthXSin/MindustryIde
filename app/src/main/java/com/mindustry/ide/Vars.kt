@@ -1,12 +1,12 @@
 package com.mindustry.ide
 
 import android.content.Context
-import com.mindustry.ide.tool.json.Parser
+import com.mindustry.ide.tool.json.JsonParser
 import java.io.File
 
-class AndroidParser(
+class AndroidJsonParser(
     storageDir: File, private val fileName: String = "config.json"
-) : Parser() {
+) : JsonParser() {
     private val configFile: File = File(storageDir, fileName)
 
     override fun load() {
@@ -17,9 +17,9 @@ class AndroidParser(
 }
 
 object Vars {
-    lateinit var parser: AndroidParser
+    lateinit var parser: AndroidJsonParser
 
     fun init(context: Context) {
-        parser = AndroidParser(context.applicationContext.filesDir)
+        parser = AndroidJsonParser(context.applicationContext.filesDir)
     }
 }

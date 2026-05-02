@@ -63,6 +63,7 @@ dependencies {
 
     implementation("com.github.Anuken.Mindustry:core:$mindustryVersion")
     implementation("com.github.Anuken.Arc:arc-core:$mindustryVersion")
+    implementation("com.github.Anuken.Mindustry:server:$mindustryVersion")
     implementation("org.jsoup:jsoup:1.22.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
