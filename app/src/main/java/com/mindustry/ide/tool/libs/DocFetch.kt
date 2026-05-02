@@ -140,8 +140,17 @@ open class DocFetch {
             }.awaitAll()
         }
     }
-
-    protected open fun updateProgress(current: Int, total: Int, success: Int, failed: Int) {
+    /**
+     * 更新进度并生成进度条显示信息
+     *
+     * @return 包含进度信息的字符串列表，按顺序为：
+     *
+     *         - [0]: 完成百分比（整数形式）
+     *         - [1]: 成功数量
+     *         - [2]: 失败数量
+     *         - [3]: 进度条字符串（由 █ 和 ░ 组成）
+     */
+    protected open fun updateProgress(current: Int, total: Int, success: Int, failed: Int): List<String> {
         progressCallback?.invoke(current, total, success, failed)
 
         val percentage = (current.toFloat() / total * 100).toInt()
@@ -149,9 +158,11 @@ open class DocFetch {
         val filled = (barLength * current / total).toInt()
         val empty = barLength - filled
         val bar = "█".repeat(filled) + "░".repeat(empty)
-        print("\rProgress: [$bar] ${percentage}% | $current/$total | Success: $success | Failed: $failed")
+        print("\r Progress: [$bar] ${percentage}% | $current/$total | Success: $success | Failed: $failed")
         System.out.flush()
+        return listOf(percentage.toString(), success.toString(), failed.toString(), bar)
     }
+
 
 
     protected open fun fetchWithRetry(url: URL, retries: Int = MAX_RETRIES): String? {
