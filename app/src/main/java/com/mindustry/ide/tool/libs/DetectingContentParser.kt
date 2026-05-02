@@ -9,6 +9,7 @@ import mindustry.ctype.ContentType
 import mindustry.mod.ClassMap
 import mindustry.mod.ContentParser
 import mindustry.mod.Mods.LoadedMod
+import java.io.File
 
 /**
  * ContentParser 的检测子类。
@@ -37,31 +38,87 @@ class DetectingContentParser : ContentParser() {
 
     fun analyzeJsonAndReport(
         json: String,
-        name: String = "<memory>",
+        name: String = "memory",
         type: ContentType = ContentType.block
     ): String {
         return analyzeJsonString(json, name, type).printIssuesPretty()
     }
 
-    fun analyzeJsonString(
-        json: String,
-        name: String = "<memory>",
-        type: ContentType = ContentType.block
-    ): DetectingContentParser {
-        val parser = DetectingContentParser()
+fun analyzeJsonString(
+    json: String,
+    name: String = "memory",
+    type: ContentType = ContentType.block
+): DetectingContentParser {
+    val parser = DetectingContentParser()
 
-        parser.parseSafe(
-            mod = null,
-            name = name,
-            json = json,
-            file = null, // 没有文件来源
-            type = type
-        )
+    // 创建临时目录模拟完整的 MOD 结构
+    val tempDir = File.createTempFile("mindustry_test_", "_mod")
+    tempDir.delete()
+    tempDir.mkdirs()
 
-        parser.finishParsing()
+    // 创建标准 MOD 目录结构
+    File(tempDir, "content/blocks").mkdirs()
+    File(tempDir, "content/items").mkdirs()
+    File(tempDir, "content/liquids").mkdirs()
+    File(tempDir, "content/units").mkdirs()
+    File(tempDir, "content/statuses").mkdirs()
+    File(tempDir, "sprites").mkdirs()
 
-        return parser
+    // 创建 mod.json
+    val modJsonFile = File(tempDir, "mod.json")
+    modJsonFile.writeText("""
+        {
+            "name": "Test Mod",
+            "displayName": "Test Mod",
+            "author": "Test",
+            "description": "Temporary test mod",
+            "version": "1.0.0",
+            "minGameVersion": "146"
+        }
+    """.trimIndent())
+
+    // 根据类型确定文件路径
+    val contentSubDir = when (type) {
+        ContentType.block -> "content/blocks"
+        ContentType.item -> "content/items"
+        ContentType.liquid -> "content/liquids"
+        ContentType.unit -> "content/units"
+        ContentType.status -> "content/statuses"
+        else -> "content/blocks"
     }
+
+    // 创建 JSON 文件
+    val jsonFile = File(tempDir, "$contentSubDir/$name.json")
+    jsonFile.writeText(json)
+
+    // 创建 Fi 对象指向这个文件
+    val fiFile = Fi(jsonFile)
+
+val modRoot = Fi(tempDir)
+val modMeta = arc.util.serialization.Json().fromJson(
+    Mods.ModMeta::class.java,
+    modRoot.child("mod.json").readString()
+)
+val mod = LoadedMod(modRoot, modRoot, null, DetectingContentParser::class.java.classLoader, modMeta)
+
+
+    parser.parseSafe(
+        mod = mod,
+        name = name,
+        json = json,
+        file = fiFile,
+        type = type
+    )
+
+    parser.finishParsing()
+
+    // 清理临时文件（可选，调试时可以注释掉）
+    tempDir.deleteRecursively()
+
+    return parser
+}
+
+
 
     fun printIssuesPretty(): String {
         if (issues.isEmpty) return "✔ No issues found."
