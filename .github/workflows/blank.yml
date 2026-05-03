@@ -1,95 +1,49 @@
-name: Java CI
+name: Android CI
 
 on:
   workflow_dispatch:
   pull_request:
     branches: [main, master]
+
 jobs:
   buildapk:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up PATH
-        run: |
-          echo "${ANDROID_HOME}/build-tools/34.0.0" >> $GITHUB_PATH
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: 21
-          distribution: 'temurin'
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+          distribution: temurin
+      - run: chmod +x gradlew
 
-      - name: Build mod apk
+      - name: Build release (auto sign)
+        if: ${{ secrets.KEYSTORE_BASE64 != '' && secrets.KEYSTORE_PASSWORD != '' && secrets.KEY_ALIAS != '' && secrets.KEY_PASSWORD != '' }}
         env:
-          KEYSTORE_BASE64: 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
-          KEYSTORE_PASSWORD: mindustryide123
-          KEY_ALIAS: mindustryide
-          KEY_PASSWORD: mindustryide123
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > release.keystore
           export KEYSTORE_PATH="release.keystore"
-          bash ./gradlew assembleRelease
+          ./gradlew assembleRelease
 
-      - name: List build outputs
-        run: ls -la app/build/outputs/apk/
+      - name: Build debug (fallback when signing secrets are missing)
+        if: ${{ !(secrets.KEYSTORE_BASE64 != '' && secrets.KEYSTORE_PASSWORD != '' && secrets.KEY_ALIAS != '' && secrets.KEY_PASSWORD != '') }}
+        run: ./gradlew assembleDebug
 
-      - name: Upload built apk file (Artifact)
+      - name: Upload release apk
+        if: ${{ secrets.KEYSTORE_BASE64 != '' && secrets.KEYSTORE_PASSWORD != '' && secrets.KEY_ALIAS != '' && secrets.KEY_PASSWORD != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.event.repository.name }}
+          name: release-apk
           path: app/build/outputs/apk/release/*.apk
 
-      - name: Generate safe tag and release info
-        id: release_info
-        shell: bash
-        run: |
-          # 获取 commit 信息
-          MESSAGE="$(jq -r '.head_commit.message' "$GITHUB_EVENT_PATH" 2>/dev/null || echo 'Auto Build')"
-          TITLE="$(printf "%s" "$MESSAGE" | head -n 1)"
-          BODY="$(printf "%s" "$MESSAGE" | tail -n +2 | sed '/./,$!d')"
-
-          # 生成安全的 tag 名称：
-          # 1. 转小写，空格变 -
-          # 2. 非字母数字变 -
-          # 3. 合并连续的 -
-          # 4. 去除开头和结尾的 - 和 .
-          SAFE_TAG="$(printf "%s" "$TITLE" \
-            | tr '[:upper:]' '[:lower:]' \
-            | sed 's/[^a-z0-9]/-/g' \
-            | sed 's/-\+/-/g' \
-            | sed 's/^[-.]*//;s/[-.]*$//')"
-
-          # 如果 commit 全是中文，SAFE_TAG 为空，用固定前缀
-          if [ -z "$SAFE_TAG" ]; then
-            SAFE_TAG="build"
-          fi
-
-          # 加上时间戳确保唯一性，且不以 - 结尾
-          TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
-          TAG_NAME="${SAFE_TAG}-${TIMESTAMP}"
-
-          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
-          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
-
-          # 生成 release body
-          cat > release_body.md <<EOF
-          $BODY
-          EOF
-
-      - name: Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload debug apk
+        if: ${{ !(secrets.KEYSTORE_BASE64 != '' && secrets.KEYSTORE_PASSWORD != '' && secrets.KEY_ALIAS != '' && secrets.KEY_PASSWORD != '') }}
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ steps.release_info.outputs.tag_name }}
-          name: ${{ steps.release_info.outputs.title }}
-          body_path: release_body.md
-          files: app/build/outputs/apk/release/*.apk
-          generate_release_notes: true
-          prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: debug-apk
+          path: app/build/outputs/apk/debug/*.apk
