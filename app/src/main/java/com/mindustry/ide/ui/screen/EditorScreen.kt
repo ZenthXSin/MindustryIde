@@ -1,89 +1,72 @@
 package com.mindustry.ide.ui.screen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.mindustry.ide.tool.ModProject
+import com.mindustry.ide.tool.ProjectStore
 import com.mindustry.ide.ui.editor.MindustryEditor
-import com.mindustry.ide.ui.theme.*
-
-/**
- * 编辑器界面
- *
- * 展示 Sora Editor 集成效果，包含顶部文件名栏和代码编辑区域。
- * 当前为演示模式，显示一段示例 Mindustry Java mod 代码。
- */
-@Composable
-fun EditorScreen(
-    modifier: Modifier = Modifier,
-    fileName: String = "ExampleMod.java",
-    initialContent: String = EXAMPLE_MOD_CODE,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MindustryDarkestestGray)
-    ) {
-        // 顶部文件名栏
-        FileTabBar(fileName = fileName)
-
-        // 代码编辑器
-        MindustryEditor(
-            content = initialContent,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-        )
-    }
-}
+import java.io.File
 
 @Composable
-private fun FileTabBar(fileName: String) {
-    androidx.compose.foundation.layout.Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MindustryDarkestGray)
-            .background(MindustryDarkerGray.copy(alpha = 0.3f))
-    ) {
-        androidx.compose.foundation.layout.Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MindustryDarkestGray)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-        ) {
-            Text(
-                text = fileName,
-                color = MindustryText,
-                fontSize = 13.sp,
-                fontFamily = FontFamily.Monospace,
-            )
+fun EditorScreen(project: ModProject, onBack: () -> Unit) {
+    val context = LocalContext.current
+    var files by remember(project.id) { mutableStateOf(ProjectStore.files(context, project.id)) }
+    var selectedFile by remember(project.id) { mutableStateOf<File?>(files.firstOrNull()) }
+    var content by remember(selectedFile?.absolutePath) { mutableStateOf(selectedFile?.let { ProjectStore.readFile(it) } ?: "") }
+    var showNewFile by remember { mutableStateOf(false) }
+    var showNewFolder by remember { mutableStateOf(false) }
+
+    Scaffold(topBar = { TopAppBar(title = { Text(project.name) }, navigationIcon = { TextButton(onClick = onBack) { Text("返回") } }, actions = {
+        TextButton(onClick = { showNewFile = true }) { Text("新建文件") }
+        TextButton(onClick = { showNewFolder = true }) { Text("新建文件夹") }
+        TextButton(onClick = { selectedFile?.let { ProjectStore.writeFile(it, content) } }) { Text("保存") }
+    }) }) { inner ->
+        Row(Modifier.padding(inner).fillMaxSize()) {
+            LazyColumn(Modifier.width(220.dp).fillMaxHeight().padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                item { Text("文件(${files.size})") }
+                items(files, key = { it.absolutePath }) { file ->
+                    Card(Modifier.fillMaxWidth().combinedClickable(onClick = {
+                        selectedFile = file
+                        content = ProjectStore.readFile(file)
+                    }, onLongClick = {
+                        ProjectStore.deletePath(file)
+                        files = ProjectStore.files(context, project.id)
+                        if (selectedFile == file) { selectedFile = null; content = "" }
+                    })) {
+                        Text(file.relativeTo(ProjectStore.projectRoot(context, project.id)).path, modifier = Modifier.padding(8.dp))
+                    }
+                }
+            }
+            VerticalDivider()
+            selectedFile?.let {
+                MindustryEditor(content = content, modifier = Modifier.weight(1f).fillMaxHeight())
+            } ?: Box(Modifier.weight(1f), contentAlignment = androidx.compose.ui.Alignment.Center) { Text("请选择文件") }
         }
     }
-}
 
-private val EXAMPLE_MOD_CODE = """package com.example.mod;
-
-import mindustry.mod.Mod;
-import mindustry.content.Items;
-import mindustry.type.ItemStack;
-
-public class ExampleMod extends Mod {
-
-    public ExampleMod() {
-        super("example-mod");
+    if (showNewFile) PathDialog("新建文件", onDismiss = { showNewFile = false }) { path ->
+        ProjectStore.createFile(context, project.id, path)
+        files = ProjectStore.files(context, project.id)
+        showNewFile = false
     }
-
-    @Override
-    public void loadContent() {
-        // Register custom content here
-        System.out.println("Example Mod loaded!");
+    if (showNewFolder) PathDialog("新建文件夹", onDismiss = { showNewFolder = false }) { path ->
+        ProjectStore.createFolder(context, project.id, path)
+        files = ProjectStore.files(context, project.id)
+        showNewFolder = false
     }
 }
-"""
+
+@Composable
+private fun PathDialog(title: String, onDismiss: () -> Unit, onCreate: (String) -> Unit) {
+    var path by remember { mutableStateOf("") }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text(title) }, text = { OutlinedTextField(path, { path = it }, label = { Text("相对路径") }) }, confirmButton = {
+        TextButton(onClick = { if (path.isNotBlank()) onCreate(path.trim()) }, enabled = path.isNotBlank()) { Text("确定") }
+    }, dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } })
+}
