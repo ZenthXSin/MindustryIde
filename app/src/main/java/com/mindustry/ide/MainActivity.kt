@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
@@ -55,6 +56,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import com.mindustry.ide.ui.component.MdtButton
+import com.mindustry.ide.ui.screen.EditorScreen
 import com.mindustry.ide.ui.theme.MindustryIdeTheme
 import com.mindustry.ide.AndroidLog
 
@@ -154,10 +156,19 @@ fun MindustryIdeApp() {
             modifier = Modifier.fillMaxSize(),
             containerColor = colorScheme.surface
         ) { innerPadding ->
-            Greeting(
-                name = "Android",
-                modifier = Modifier.padding(innerPadding)
-            )
+            when (currentDestination) {
+                AppDestinations.EDITOR -> {
+                    EditorScreen(
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+                else -> {
+                    Greeting(
+                        name = "Android",
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+            }
         }
     }
     } // if-else
@@ -168,6 +179,7 @@ enum class AppDestinations(
     val icon: ImageVector,
 ) {
     HOME("Home", Icons.Default.Home),
+    EDITOR("Editor", Icons.Default.Create),
     FAVORITES("Favorites", Icons.Default.Favorite),
     PROFILE("Profile", Icons.Default.AccountBox),
 }

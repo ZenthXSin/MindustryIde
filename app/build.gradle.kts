@@ -67,4 +67,9 @@ dependencies {
     implementation("org.jsoup:jsoup:1.22.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+
+    // Sora Editor - Code Editor Component
+    implementation("io.github.rosemoe:editor:0.24.5")
+    implementation("io.github.rosemoe:language-textmate:0.24.5")
+    implementation("io.github.rosemoe:language-java:0.24.5")
 }
