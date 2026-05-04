@@ -27,6 +27,17 @@ open class JsonParser {
         return fieldDocs[className]?.get(fieldName)?.defaultValue ?: "null"
     }
 
+    fun getFieldDefaultValue(fieldName: String): List<String> {
+        val ret = mutableListOf<String>()
+        fieldDocs.forEach { (className, fieldMap) ->
+            fieldMap.filter {
+                it.value.name == fieldName
+            }.forEach { ret += getFieldDefaultValue(className, it.key) }
+        }
+        if (ret.isEmpty()) ret += "null"
+        return ret
+    }
+
     fun getFieldDoc(className: String, fieldName: String): String {
         return fieldDocs[className]?.get(fieldName)?.notes ?: ""
     }

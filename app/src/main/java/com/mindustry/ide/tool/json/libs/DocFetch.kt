@@ -1,12 +1,16 @@
-package com.mindustry.ide.tool.libs
+package com.mindustry.ide.tool.json.libs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
@@ -212,7 +216,7 @@ open class DocFetch {
     protected open fun fetchModdingDocs(): List<WikiDoc> {
         return try {
             val response = fetchWithRetry(URL(URL(BASE_URL), "search/search_index.json")) ?: return emptyList()
-            val json = kotlinx.serialization.json.Json {
+            val json = Json {
                 ignoreUnknownKeys = true
             }
             val result = json.decodeFromString<WikiSearchResult>(response)
@@ -223,7 +227,7 @@ open class DocFetch {
         }
     }
 
-    protected open fun parseTable(table: org.jsoup.nodes.Element): List<FieldMeta> {
+    protected open fun parseTable(table: Element): List<FieldMeta> {
         return table.select("tr").drop(1).mapNotNull { row ->
             val cells = row.select("td, th")
             if (cells.size < 4) null
@@ -238,13 +242,13 @@ open class DocFetch {
 
     protected open fun disableSslVerification() {
         val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
-            override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate>? = null
-            override fun checkClientTrusted(certs: Array<java.security.cert.X509Certificate>, authType: String) {}
-            override fun checkServerTrusted(certs: Array<java.security.cert.X509Certificate>, authType: String) {}
+            override fun getAcceptedIssuers(): Array<X509Certificate>? = null
+            override fun checkClientTrusted(certs: Array<X509Certificate>, authType: String) {}
+            override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) {}
         })
 
         val sc = SSLContext.getInstance("SSL")
-        sc.init(null, trustAllCerts, java.security.SecureRandom())
+        sc.init(null, trustAllCerts, SecureRandom())
         HttpsURLConnection.setDefaultSSLSocketFactory(sc.socketFactory)
         HttpsURLConnection.setDefaultHostnameVerifier { _, _ -> true }
     }

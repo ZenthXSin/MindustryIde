@@ -47,13 +47,9 @@ data class WorkFileData(
     }
 }
 
-abstract class WorkFile(var data: WorkFileData = WorkFileData()) {
+abstract class WorkFile(var name: String,var data: WorkFileData = WorkFileData()) {
     open fun load(json: String) {
         data = Json.decodeFromString<WorkFileData>(json)//反序列化
-    }
-
-    open fun export(): String {
-        return data.content
     }
 
     open fun update() {
@@ -62,6 +58,6 @@ abstract class WorkFile(var data: WorkFileData = WorkFileData()) {
 
     abstract fun getContent(): String
     abstract fun import(content: String)
-
+    abstract  fun export(): String
     abstract fun init()
 }
