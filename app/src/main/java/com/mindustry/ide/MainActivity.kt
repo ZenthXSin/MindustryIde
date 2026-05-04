@@ -57,6 +57,8 @@ import androidx.compose.ui.unit.dp
 import com.mindustry.ide.ui.component.MdtButton
 import com.mindustry.ide.ui.theme.MindustryIdeTheme
 import com.mindustry.ide.AndroidLog
+import com.mindustry.ide.tool.json.JsonEditorScreen
+import com.mindustry.ide.tool.json.JsonEditorTool
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -154,10 +156,20 @@ fun MindustryIdeApp() {
             modifier = Modifier.fillMaxSize(),
             containerColor = colorScheme.surface
         ) { innerPadding ->
-            Greeting(
-                name = "Android",
-                modifier = Modifier.padding(innerPadding)
-            )
+            val tool = remember {
+                object : JsonEditorTool() {
+                    override fun error(message: String) = AndroidLog.e("JsonEditor", message)
+                    override fun info(message: String) = AndroidLog.i("JsonEditor", message)
+                    override fun warning(message: String) = AndroidLog.w("JsonEditor", message)
+                }
+            }
+            var exported by remember { mutableStateOf("") }
+            Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                JsonEditorScreen(tool = tool, modifier = Modifier.weight(1f), onExport = { exported = it })
+                if (exported.isNotBlank()) {
+                    Text(text = "导出预览:\n$exported", modifier = Modifier.padding(12.dp))
+                }
+            }
         }
     }
     } // if-else

@@ -52,6 +52,20 @@ abstract class JsonEditorTool {
         return jsonWorkFile
     }
 
+    fun getCurrentWorkFileOrNull(): JsonWorkFile? = if (::jsonWorkFile.isInitialized) jsonWorkFile else null
+
+    /**
+     * 以列表形式返回当前可用字段，给图形化 UI 渲染使用。
+     */
+    fun listAvailableFields(): List<FieldBuild> {
+        val workFile = getCurrentWorkFileOrNull()
+        if (workFile == null) {
+            warning("JsonWorkFile 尚未创建，返回空字段列表")
+            return emptyList()
+        }
+        return workFile.classBuild.getAllFields().map { FieldBuild(it) }
+    }
+
     /**添加Field封装
      * @param choose Field选择
      * @param set 初始化FieldBuild*/
@@ -74,6 +88,18 @@ abstract class JsonEditorTool {
         } else {
             error("Field不存在: $name")
         }
+    }
+
+    /**
+     * 导出当前 JSON 字符串。
+     */
+    fun exportCurrentJson(pretty: Boolean = true): String {
+        val workFile = getCurrentWorkFileOrNull()
+        if (workFile == null) {
+            error("JsonWorkFile 尚未创建，无法导出")
+            return ""
+        }
+        return if (pretty) workFile.getContent() else workFile.classBuild.toJson()
     }
 }
 

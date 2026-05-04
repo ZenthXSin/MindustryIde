@@ -1,18 +1,11 @@
 package com.mindustry.ide
 
-import arc.files.Fi
-import com.mindustry.ide.tool.json.ClassBuild
-import com.mindustry.ide.tool.json.FieldBuild
 import com.mindustry.ide.tool.json.JsonEditorTool
-import com.mindustry.ide.tool.json.JsonEditorTool.*
-import com.mindustry.ide.tool.json.JsonWorkFile
-import com.mindustry.ide.tool.json.addFieldBuild
 import mindustry.Vars
 import mindustry.core.ContentLoader
-import mindustry.world.blocks.production.GenericCrafter
 import org.junit.BeforeClass
 import org.junit.Test
-import java.io.File
+import kotlin.test.assertTrue
 
 class ExampleUnitTest {
     @Test
@@ -36,7 +29,6 @@ class ExampleUnitTest {
             }
 
         }
-        //新建JsonWorkFile
         val jsonWorkFile = tool.new("test") {
             first { it.name == "GenericCrafter" }
         }
@@ -64,7 +56,18 @@ class ExampleUnitTest {
             }) { apply { value.value = "-rotate" } }
         } }
         println("导出")
-        println(jsonWorkFile.getContent())
+        val exported = jsonWorkFile.export()
+        println(exported)
+        assertTrue(exported.contains("\"type\": \"GenericCrafter\""))
+        assertTrue(exported.contains("\"outputItem\""))
     }
 
+    companion object {
+        @JvmStatic
+        @BeforeClass
+        fun setupMindustry() {
+            Vars.content = ContentLoader()
+            com.mindustry.ide.Vars.initTest()
+        }
+    }
 }
