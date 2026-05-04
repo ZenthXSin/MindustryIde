@@ -1,44 +1,20 @@
 package com.mindustry.ide.tool.json
 
 import arc.struct.ObjectMap
-import arc.struct.Seq
 import com.mindustry.ide.Vars
 import com.mindustry.ide.tool.WorkFile
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import mindustry.content.*
-import mindustry.entities.Effect
-import mindustry.entities.abilities.Ability
-import mindustry.entities.abilities.RegenAbility
-import mindustry.entities.bullet.BasicBulletType
-import mindustry.entities.bullet.BulletType
-import mindustry.entities.part.DrawPart
-import mindustry.entities.part.FlarePart
-import mindustry.entities.part.HaloPart
-import mindustry.entities.part.HoverPart
-import mindustry.entities.part.RegionPart
-import mindustry.entities.part.ShapePart
+import kotlinx.serialization.json.JsonElement
 import arc.util.Nullable
-import mindustry.entities.pattern.ShootPattern
-import mindustry.game.Team
-import mindustry.gen.Unit
-import mindustry.type.*
-import mindustry.type.ammo.ItemAmmoType
-import mindustry.type.weather.ParticleWeather
 import mindustry.world.Block
-import mindustry.world.consumers.Consume
-import mindustry.world.consumers.ConsumeItems
-import mindustry.world.draw.DrawBlock
-import mindustry.world.draw.DrawDefault
-import mindustry.world.draw.DrawMulti
-import mindustry.world.draw.DrawTurret
-import mindustry.world.meta.Env
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import kotlin.jvm.java
 
 
+
+//TODO Seq<>的适配
 /**
  * 判断字段在 JSON 里是否“大概率必须写”
  *
@@ -66,8 +42,35 @@ fun Field.isLikelyRequired(): Boolean {
     return true
 }
 
-class JsonWorkFile(var classBuild: ClassBuild) : WorkFile() {
+fun String.isBooleanString(): Boolean {
+    return this.equals("true", ignoreCase = true) ||
+            this.equals("false", ignoreCase = true)
+}
+
+fun String.isNumber(): Boolean {
+    return this.toDoubleOrNull() != null
+}
+
+val json = Json { prettyPrint = true }
+
+class JsonWorkFile(name: String) : WorkFile(name) {
+    var classBuild: ClassBuild = ClassBuild(Block::class.java)
+
+    val json1 = Json {
+        prettyPrint = true
+        prettyPrintIndent = "    "
+    }
+
+    fun loadClassBuild(run: ObjectMap<String?, Class<*>?>?.() -> ClassBuild): JsonWorkFile {
+        classBuild = run(Vars.parser.classMap)
+        return this
+    }
+
     override fun import(content: String) {
+        TODO("Not yet implemented")
+    }
+
+    override fun export(): String {
         TODO("Not yet implemented")
     }
 
@@ -75,100 +78,204 @@ class JsonWorkFile(var classBuild: ClassBuild) : WorkFile() {
         TODO("Not yet implemented")
     }
 
-    override fun getContent(): String {
-        TODO("Not yet implemented")
+        override fun getContent(): String {
+        val jsonString = classBuild.toJson()
+        return formatJson(jsonString)
     }
 
+    fun formatJson(json: String): String {
+        return try {
+            // 使用 Json.parseToJsonElement 扩展函数
+            val jsonElement: JsonElement = Json.parseToJsonElement(json)
+            json1.encodeToString(jsonElement)
+        } catch (e: Exception) {
+            json
+        }
+    }
+
+
+
     override fun toString(): String {
-        return Json.encodeToString(classBuild)
+        return json.encodeToString(classBuild)
+    }
+
+    fun addFieldBuild(run: (data: ClassBuild) -> FieldBuild) {
+        classBuild.addFieldBuild { run(classBuild) }
     }
 }
 
 class ClassBuild(
     var classData: Class<*>,
+    var name: String = classData.simpleName,
     var doc: String = Vars.parser.getClassDoc(classData.name),
     var parentType: String = Vars.parser.getParentType(classData.name),
-    var fieldBuilds: MutableList<FieldBuild> = mutableListOf()
+    var fieldBuilds: MutableList<FieldBuild> = mutableListOf(),
+    var value: String = ""
 ) {
     init {
-        classData.fields.filter { it.isLikelyRequired() }.forEach {
-            fieldBuilds.add(FieldBuild(it, classData))
+        if (value.isEmpty()) {
+            value = Vars.parser.getFieldDefaultValue(classData.simpleName)[0]
         }
+    }
+
+    @Serializable
+    data class ClassMeta(
+        var className: String,
+        var classSimpleName: String,
+        var doc: String,
+        var parentType: String,
+        var fields: List<FieldBuild.FieldMeta>,
+        var value: String = ""
+    )
+
+    override fun toString(): String {
+        return json.encodeToString(getMeta())
+    }
+
+    fun toJson(): String {
+        if (value != "null") return if (value.isBooleanString()) {
+            value
+        } else if (value.isNumber()) {
+            value
+        } else {
+            "\"$value\""
+        }
+        var ret = "{\n"
+        ret += "\"type\": \"$name\"" + if (fieldBuilds.isEmpty()) "\n" else ",\n"
+        for (fieldBuild in fieldBuilds) {
+            ret += fieldBuild.toJson() + if (fieldBuild != fieldBuilds.last()) {
+                ",\n"
+            } else {
+                "\n"
+            }
+        }
+        return "$ret}"
+    }
+
+    fun getMeta(): ClassMeta {
+        return ClassMeta(classData.name, name, doc, parentType, fieldBuilds.map { it.getMeta() }, value)
+    }
+
+    fun getAllFields(): List<Field> = classData.fields.toList()
+
+    fun getFieldByName(name: String): Field {
+        return classData.fields.firstOrNull { it.name == name } ?: classData.fields.random()
+    }
+
+    fun getFieldBuildByName(name: String): FieldBuild? {
+        return fieldBuilds.firstOrNull { it.field.name == name }
+    }
+
+    fun addFieldBuild(run: () -> FieldBuild) {
+        fieldBuilds.add(run())
+    }
+
+    fun setFieldBuild(fieldBuild: FieldBuild, run: (FieldBuild) -> FieldBuild) {
+        fieldBuilds.removeIf { it.field.name == fieldBuild.field.name }
+        fieldBuilds.add(run(fieldBuild))
     }
 }
 
 class FieldBuild(
     var field: Field,
-    var classData: Class<*>,
+    var classData: Class<*> = field.type,
     var doc: String = Vars.parser.getFieldDoc(classData.name, field.name)
 ) {
-    var index = getValue()
+    var value = Value(getDefaultForClass(field.type), ClassBuild(field.type))
+
+    @Serializable
+    data class FieldMeta(var fieldName: String, var className: String, var doc: String, var value: ClassBuild.ClassMeta)
+
+    override fun toString(): String {
+        return json.encodeToString(getMeta())
+    }
+
+    fun getMeta(): FieldMeta {
+        return FieldMeta(field.name, classData.name, doc, value.getTypeValueMeta())
+    }
+
+    fun toJson(): String {
+        return "\"${field.name}\": " + value.toJson()
+    }
 
     companion object {
         val defaultValues = mapOf(
-            Int::class.java to { 0 },
-            Float::class.java to { 0f },
-            Double::class.java to { 0.0 },
-            Boolean::class.java to { false },
-            Long::class.java to { 0L },
-            Short::class.java to { 0.toShort() },
-            Byte::class.java to { 0.toByte() },
-            Char::class.java to { '\u0000' },
+            Int::class.java to { "0" },
+            Float::class.java to { "0" },
+            Double::class.java to { "0" },
+            Boolean::class.java to { "false" },
+            Long::class.java to { "0" },
+            Short::class.java to { "0" },
+            Byte::class.java to { "0" },
+            Char::class.java to { "0" },
             String::class.java to { "" },
-            Block::class.java to { Blocks.air },
-            Item::class.java to { Items.copper },
-            Liquid::class.java to { Liquids.water },
-            StatusEffect::class.java to { StatusEffects.none },
-            UnitType::class.java to { UnitTypes.alpha },
-            Effect::class.java to { Fx.none },
-            Team::class.java to { Team.crux },
-            Planet::class.java to { Planets.serpulo },
-            ShootPattern::class.java to { ShootPattern() },
-            Seq::class.java to { Seq<Any>() },
-            Category::class.java to { Category.distribution },
-            BulletType::class.java to { BasicBulletType() },
-            Weapon::class.java to { Weapon() },
-            ItemStack::class.java to { ItemStack(Items.copper, 0) },
-            LiquidStack::class.java to { LiquidStack(Liquids.water, 0f) },
-            PayloadStack::class.java to { PayloadStack(Blocks.air, 0) },
-            ItemSeq::class.java to { ItemSeq() },
-            AmmoType::class.java to { ItemAmmoType() },
-            DrawBlock::class.java to { DrawDefault() },
-            DrawMulti::class.java to { DrawMulti() },
-            DrawTurret::class.java to { DrawTurret() },
-            Weather::class.java to { Weathers.snow },
-            DrawPart::class.java to { RegionPart() },
-            Ability::class.java to { RegenAbility() },
-            Consume::class.java to { ConsumeItems(ItemStack.with(Items.copper, 1)) }
             //TODO 更多待补充
         )
 
-        fun getDefaultForClass(clazz: Class<*>): Any? {
-            return defaultValues[clazz]?.invoke()
-        }
-    }
-
-    fun getValue(): Value {
-        defaultValues[field.type]?.let { factory ->
-            return Value(factory(), field.type)
-        }
-
-        findRegisteredInstance()?.let { instance ->
-            return Value(instance, field.type)
-        }
-
-        return Value(null, null)
-    }
-
-    private fun findRegisteredInstance(): Any? {
-        return try {
-            val classMap = Vars.parser.classMap
-            val className = field.type.simpleName
-            classMap?.get(className)
-        } catch (e: Exception) {
-            null
+        fun getDefaultForClass(clazz: Class<*>): String {
+            return defaultValues[clazz]?.invoke() ?: ""
         }
     }
 }
 
-data class Value(var value: Any?, var type: Class<*>?)
+class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> String? = { null }) {
+    @Serializable
+    data class ValueMeta(var value: String, var typeValue: ClassBuild.ClassMeta)
+
+    fun getMeta(): ValueMeta {
+        return ValueMeta(value, getTypeValueMeta())
+    }
+
+    fun toJson(): String {
+        return run(this) ?: when {
+            value.isNotEmpty() -> if (value.isBooleanString()) {
+                value
+            } else if (value.isNumber()) {
+                value
+            } else {
+                "\"$value\""
+            }
+
+            typeValue is ClassBuild -> (typeValue as ClassBuild).toJson()
+            else -> typeValue?.toString() ?: "null"
+        }
+    }
+
+    fun getString(): String {
+        return run(this) ?: when {
+            value.isNotEmpty() -> value
+            typeValue is ClassBuild -> (typeValue as ClassBuild).toString()
+            else -> typeValue?.toString() ?: ""
+        }
+    }
+
+    fun getTypeValueMeta(): ClassBuild.ClassMeta {
+        val classType = if (value.isBooleanString()) {
+            Boolean::class.java
+        } else if (value.isNumber()) {
+            Int::class.java
+        } else {
+            String::class.java
+        }
+        return when {
+            value.isNotEmpty() -> ClassBuild.ClassMeta(
+                classType.name,
+                classType.simpleName,
+                "可能为其他类型转为字符串",
+                "",
+                listOf(),
+                value
+            )
+
+            typeValue is ClassBuild -> (typeValue as ClassBuild).getMeta()
+            else -> ClassBuild.ClassMeta(
+                Nullable::class.java.name,
+                Nullable::class.java.simpleName,
+                "",
+                "",
+                listOf(),
+                "null"
+            )
+        }
+    }
+}
