@@ -191,4 +191,85 @@ class DialogController {
             )
         }
     }
+    
+    /**
+     * 显示新建项目对话框
+     */
+    @PostMapping("/new-project")
+    fun showNewProject(): Map<String, Boolean> {
+        val dialog = NewProjectDialog.create()
+        DialogManager.showDialog(dialog)
+        return mapOf("success" to true)
+    }
+    
+    /**
+     * 获取新建项目可用的类列表
+     */
+    @GetMapping("/new-project/classes")
+    fun getNewProjectClasses(): Map<String, Any?> {
+        return try {
+            val classNames = NewProjectDialog.getAvailableClasses()
+            mapOf(
+                "success" to true,
+                "classes" to classNames,
+                "count" to classNames.size
+            )
+        } catch (e: Exception) {
+            mapOf(
+                "success" to false,
+                "error" to e.message
+            )
+        }
+    }
+    
+    /**
+     * 创建新项目
+     */
+    @PostMapping("/create-project")
+    fun createProject(@RequestBody request: Map<String, String>): Map<String, Any?> {
+        val projectName = request["projectName"] ?: ""
+        val className = request["className"] ?: ""
+        
+        return com.mindustry.ide.web.project.ProjectManager.createProject(projectName, className)
+    }
+    
+    /**
+     * 获取项目内容（用于导出）
+     */
+    @GetMapping("/project-content")
+    fun getProjectContent(@RequestParam projectName: String): Map<String, Any?> {
+        return com.mindustry.ide.web.project.ProjectManager.getProjectContent(projectName)
+    }
+    
+    /**
+     * 获取项目列表
+     */
+    @GetMapping("/project-list")
+    fun getProjectList(): Map<String, Any?> {
+        val projects = com.mindustry.ide.web.project.ProjectManager.getProjectList()
+        return mapOf(
+            "success" to true,
+            "projects" to projects,
+            "count" to projects.size
+        )
+    }
+    
+    /**
+     * 删除项目
+     */
+    @PostMapping("/delete-project")
+    fun deleteProject(@RequestBody request: Map<String, String>): Map<String, Any?> {
+        val projectName = request["projectName"] ?: ""
+        return com.mindustry.ide.web.project.ProjectManager.deleteProject(projectName)
+    }
+    
+    /**
+     * 重命名项目
+     */
+    @PostMapping("/rename-project")
+    fun renameProject(@RequestBody request: Map<String, String>): Map<String, Any?> {
+        val oldName = request["oldName"] ?: ""
+        val newName = request["newName"] ?: ""
+        return com.mindustry.ide.web.project.ProjectManager.renameProject(oldName, newName)
+    }
 }

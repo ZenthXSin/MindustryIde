@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 编辑器 - Mindustry IDE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #2b2d30;
+            --bg-secondary: #3c3f41;
+            --bg-tertiary: #45494a;
+            --accent-blue: #3574f0;
+            --accent-blue-hover: #4a85f5;
+            --text-primary: #a9b7c6;
+            --text-secondary: #808080;
+            --border-color: #555555;
+            --success: #59a869;
+            --error: #ff4444;
+            --sidebar-width: 280px;
+            --navbar-height: 57px;
+            --canvas-bg: #1e1f22;
+            --grid-line-subtle: rgba(255, 255, 255, 0.04);
+            --grid-line-major: rgba(255, 255, 255, 0.07);
+            --grid-dot-color: rgba(255, 255, 255, 0.12);
+            --canvas-origin-marker: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            height: var(--navbar-height);
+            flex-shrink: 0;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .navbar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .navbar-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .navbar-project {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            margin-left: 16px;
+            padding-left: 16px;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .navbar-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .navbar-btn {
+            padding: 6px 16px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .navbar-btn:hover {
+            background-color: var(--bg-tertiary);
+            border-color: var(--text-secondary);
+        }
+
+        .navbar-btn.primary {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .navbar-btn.primary:hover {
+            background-color: var(--accent-blue-hover);
+            border-color: var(--accent-blue-hover);
+        }
+
+        /* 主内容区 */
+        .container {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - var(--navbar-height));
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 遮罩层（移动端侧边栏展开时使用） */
+        .sidebar-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            cursor: pointer;
+        }
+        .sidebar-overlay.visible {
+            display: block;
+        }
+
+        /* 左侧边栏 */
+        .sidebar {
+            position: relative;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            transition: width 0.2s ease, min-width 0.2s ease, border 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            z-index: 50;
+            flex-shrink: 0;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            min-width: 0;
+            border-right: none;
+        }
+
+        .sidebar-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 48px;
+            white-space: nowrap;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .sidebar.collapsed .sidebar-header {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .sidebar.collapsed .sidebar-content {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* 侧边栏展开/收起按钮 */
+        .sidebar-expand-btn {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translate(100%, -50%);
+            width: 32px;
+            height: 48px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0 4px 4px 0;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: background-color 0.15s ease, color 0.15s ease;
+            z-index: 51;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .sidebar-expand-btn:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* ======================================== */
+        /* 编辑器画布区域 */
+        /* ======================================== */
+        .editor-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--canvas-bg);
+            cursor: grab;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .editor-area:active {
+            cursor: grabbing;
+        }
+
+        .editor-area.grabbing {
+            cursor: grabbing;
+        }
+
+        /* 画布变换层 - 包含网格和所有内容 */
+        .canvas-transform-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 12000px;
+            height: 12000px;
+            transform-origin: 0 0;
+            transform: translate(0px, 0px) scale(1);
+            will-change: transform;
+            /* 网格背景 */
+            background-image:
+                /* 次网格线 - 每100px (5格) */ linear-gradient(to right,
+            var(--grid-line-major) 1px,
+            transparent 1px),
+            linear-gradient(to bottom, var(--grid-line-major) 1px, transparent 1px),
+                /* 主网格线 - 每20px */ linear-gradient(to right,
+                    var(--grid-line-subtle) 1px,
+                    transparent 1px),
+            linear-gradient(to bottom, var(--grid-line-subtle) 1px, transparent 1px);
+            background-size:
+                    100px 100px,
+                    100px 100px,
+                    20px 20px,
+                    20px 20px;
+            background-position: 0 0, 0 0, 0 0, 0 0;
+            /* 原点十字标记（在0,0处） */
+            /* 通过额外的径向渐变或使用box-shadow在原点做标记太复杂，用伪元素或单独元素实现 */;
+        }
+
+        /* 原点标记 - 画布坐标(0,0)处的十字线 */
+        .canvas-origin-marker {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 41px;
+            height: 41px;
+            pointer-events: none;
+            z-index: 2;
+            transform: translate(-20px, -20px);
+        }
+        .canvas-origin-marker::before,
+        .canvas-origin-marker::after {
+            content: '';
+            position: absolute;
+            background-color: var(--canvas-origin-marker);
+        }
+        .canvas-origin-marker::before {
+            /* 水平线 */
+            left: 0;
+            top: 20px;
+            width: 41px;
+            height: 1px;
+        }
+        .canvas-origin-marker::after {
+            /* 垂直线 */
+            left: 20px;
+            top: 0;
+            width: 1px;
+            height: 41px;
+        }
+
+        /* 画布内容容器 */
+        .canvas-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .canvas-content>* {
+            pointer-events: auto;
+        }
+
+        /* 画布中央提示 */
+        .canvas-hint {
+            position: absolute;
+            left: 6000px;
+            top: 6000px;
+            transform: translate(-50%, -50%);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            text-align: center;
+            pointer-events: none;
+            white-space: nowrap;
+            letter-spacing: 0.04em;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .canvas-hint span {
+            display: block;
+            font-size: 0.75rem;
+            opacity: 0.5;
+            margin-top: 6px;
+        }
+
+        /* 缩放控件 - 固定在编辑器区域右下角 */
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 10;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 4px 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.12s ease, color 0.12s ease;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .zoom-btn:hover {
+            background-color: var(--bg-tertiary);
+            color: #fff;
+        }
+        .zoom-btn:active {
+            background-color: var(--accent-blue);
+            color: #fff;
+        }
+
+        .zoom-label {
+            color: var(--text-primary);
+            font-size: 0.78rem;
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 48px;
+            text-align: center;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: background-color 0.12s ease;
+            letter-spacing: 0.02em;
+        }
+        .zoom-label:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .zoom-divider {
+            width: 1px;
+            height: 20px;
+            background-color: var(--border-color);
+            margin: 0 2px;
+            flex-shrink: 0;
+        }
+
+        /* 坐标指示器 */
+        .coord-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            pointer-events: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+            letter-spacing: 0.03em;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .coord-indicator.visible {
+            opacity: 1;
+        }
+
+        .coord-indicator span {
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0;
+            }
+
+            .navbar {
+                padding: 12px 16px;
+            }
+
+            .navbar-project {
+                display: none;
+            }
+
+            .sidebar {
+                position: absolute;
+                height: 100%;
+                top: 0;
+                left: 0;
+            }
+
+            .sidebar.collapsed {
+                left: auto;
+            }
+
+            .zoom-controls {
+                bottom: 14px;
+                right: 12px;
+                gap: 2px;
+                padding: 3px 4px;
+                border-radius: 6px;
+            }
+            .zoom-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 1rem;
+                border-radius: 4px;
+            }
+            .zoom-label {
+                font-size: 0.7rem;
+                min-width: 40px;
+                padding: 3px 4px;
+            }
+            .zoom-divider {
+                height: 16px;
+                margin: 0 1px;
+            }
+
+            .coord-indicator {
+                bottom: 14px;
+                left: 10px;
+                font-size: 0.65rem;
+                padding: 4px 8px;
+                border-radius: 4px;
+            }
+
+            .canvas-hint {
+                font-size: 0.8rem;
+            }
+            .canvas-hint span {
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 顶部导航栏 -->
+<nav class="navbar">
+    <div class="navbar-brand">
+        <div>
+            <div class="navbar-title">Mindustry IDE</div>
+        </div>
+        <div class="navbar-project" id="projectName">项目名称</div>
+    </div>
+    <div class="navbar-actions">
+        <button type="button" class="navbar-btn" onclick="goBack()">← 返回</button>
+        <button type="button" class="navbar-btn primary" onclick="exportProject()">导出</button>
+    </div>
+</nav>
+
+<!-- 主内容区 -->
+<div class="container">
+    <!-- 移动端遮罩 -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebarOnMobile()"></div>
+
+    <!-- 左侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <button type="button" class="sidebar-expand-btn" id="sidebarToggleBtn" aria-label="收起侧边栏" title="展开/收起侧边栏" onclick="toggleSidebar()">&lt;
+        </button>
+        <div class="sidebar-header">
+            <span class="sidebar-title">字段选择</span>
+        </div>
+        <div class="sidebar-content">
+            <p style="color: var(--text-secondary); font-size: 0.85rem;">这里是字段选择区域（占位符）</p>
+        </div>
+    </aside>
+
+    <!-- 编辑器画布区域 -->
+    <div class="editor-area" id="editorArea">
+        <!-- 画布变换层 -->
+        <div class="canvas-transform-layer" id="canvasTransform">
+            <!-- 原点标记 -->
+            <div class="canvas-origin-marker"></div>
+            <!-- 画布内容 -->
+            <div class="canvas-content" id="canvasContent">
+                <div class="canvas-hint" id="canvasHint">
+                    🖱 拖拽平移 &nbsp;|&nbsp; 滚轮缩放
+                    <span>双击重置视图 · 右下角控件调节缩放</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 坐标指示器 -->
+        <div class="coord-indicator" id="coordIndicator">
+            画布: <span id="coordX">0</span>, <span id="coordY">0</span>
+        </div>
+
+        <!-- 缩放控件 -->
+        <div class="zoom-controls" id="zoomControls">
+            <button class="zoom-btn" id="zoomOutBtn" title="缩小" aria-label="缩小">−</button>
+            <span class="zoom-label" id="zoomLabel" title="点击重置缩放">100%</span>
+            <button class="zoom-btn" id="zoomInBtn" title="放大" aria-label="放大">+</button>
+            <span class="zoom-divider"></span>
+            <button class="zoom-btn" id="zoomResetBtn" title="重置视图" aria-label="重置视图">↺</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ============ URL 参数 & 项目名称 ============
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectName = urlParams.get('project') || '未命名项目';
+        document.getElementById('projectName').textContent = projectName;
+
+        // ============ DOM 元素引用 ============
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggleBtn');
+        const overlay = document.getElementById('sidebarOverlay');
+        const editorArea = document.getElementById('editorArea');
+        const canvasTransform = document.getElementById('canvasTransform');
+        const canvasHint = document.getElementById('canvasHint');
+        const coordIndicator = document.getElementById('coordIndicator');
+        const coordX = document.getElementById('coordX');
+        const coordY = document.getElementById('coordY');
+        const zoomLabel = document.getElementById('zoomLabel');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomResetBtn = document.getElementById('zoomResetBtn');
+
+        // ============ 状态变量 ============
+        let currentTranslateX = 0;
+        let currentTranslateY = 0;
+        let currentScale = 1;
+        const SCALE_MIN = 0.05;
+        const SCALE_MAX = 8;
+        const SCALE_STEP = 1.1; // 每次缩放10%
+        const DRAG_THRESHOLD = 3; // 拖动阈值（px），小于此值视为点击
+        const CANVAS_SIZE = 12000; // 画布尺寸
+        const CANVAS_CENTER = CANVAS_SIZE / 2;
+
+        // 拖动状态
+        let isPanning = false;
+        let dragStartMouseX = 0;
+        let dragStartMouseY = 0;
+        let dragStartTranslateX = 0;
+        let dragStartTranslateY = 0;
+        let hasMoved = false;
+
+        // 触摸状态
+        let touchStartDistance = 0;
+        let touchStartScale = 1;
+        let touchStartMidX = 0;
+        let touchStartMidY = 0;
+        let touchStartTranslateX = 0;
+        let touchStartTranslateY = 0;
+        let activeTouches = 0;
+
+        // 坐标指示器计时器
+        let coordTimer = null;
+
+        // ============ 初始化 ============
+        function initCanvasView() {
+            // 获取编辑器区域尺寸
+            const rect = editorArea.getBoundingClientRect();
+            // 初始视图：将画布中心置于编辑器区域中心
+            const initTx = rect.width / 2 - CANVAS_CENTER;
+            const initTy = rect.height / 2 - CANVAS_CENTER;
+            currentTranslateX = initTx;
+            currentTranslateY = initTy;
+            currentScale = 1;
+            applyTransform();
+        }
+
+        function applyTransform() {
+            canvasTransform.style.transform =
+                `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
+            updateZoomLabel();
+        }
+
+        function updateZoomLabel() {
+            const percentage = Math.round(currentScale * 100);
+            zoomLabel.textContent = percentage + '%';
+        }
+
+        // ============ 坐标指示器 ============
+        function showCoordIndicator(canvasX, canvasY) {
+            coordX.textContent = Math.round(canvasX);
+            coordY.textContent = Math.round(canvasY);
+            coordIndicator.classList.add('visible');
+            // 清除之前的计时器
+            if (coordTimer) clearTimeout(coordTimer);
+            coordTimer = setTimeout(() => {
+                coordIndicator.classList.remove('visible');
+            }, 2000);
+        }
+
+        function hideCoordIndicator() {
+            coordIndicator.classList.remove('visible');
+            if (coordTimer) clearTimeout(coordTimer);
+        }
+
+        // ============ 屏幕坐标 → 画布坐标 ============
+        function screenToCanvas(screenX, screenY) {
+            const rect = editorArea.getBoundingClientRect();
+            const sx = screenX - rect.left;
+            const sy = screenY - rect.top;
+            const cx = (sx - currentTranslateX) / currentScale;
+            const cy = (sy - currentTranslateY) / currentScale;
+            return { x: cx, y: cy };
+        }
+
+        // ============ 应用缩放（以指定屏幕点为中心） ============
+        function zoomAtScreenPoint(screenX, screenY, newScale) {
+            newScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, newScale));
+            if (newScale === currentScale) return;
+
+            const rect = editorArea.getBoundingClientRect();
+            const sx = screenX - rect.left;
+            const sy = screenY - rect.top;
+
+            // 屏幕点对应的画布坐标（缩放前）
+            const cx = (sx - currentTranslateX) / currentScale;
+            const cy = (sy - currentTranslateY) / currentScale;
+
+            // 新的平移量，使得同一画布坐标保持在屏幕同一位置
+            currentTranslateX = sx - cx * newScale;
+            currentTranslateY = sy - cy * newScale;
+            currentScale = newScale;
+
+            applyTransform();
+        }
+
+        // ============ 鼠标事件处理 ============
+        editorArea.addEventListener('mousedown', (e) => {
+            // 只响应左键
+            if (e.button !== 0) return;
+            // 如果点击的是缩放控件，不处理
+            if (e.target.closest('.zoom-controls')) return;
+
+            e.preventDefault();
+            isPanning = true;
+            hasMoved = false;
+            dragStartMouseX = e.clientX;
+            dragStartMouseY = e.clientY;
+            dragStartTranslateX = currentTranslateX;
+            dragStartTranslateY = currentTranslateY;
+            editorArea.classList.add('grabbing');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isPanning) {
+                // 更新坐标指示器（鼠标悬停时显示画布坐标）
+                const rect = editorArea.getBoundingClientRect();
+                if (
+                    e.clientX >= rect.left &&
+                    e.clientX <= rect.right &&
+                    e.clientY >= rect.top &&
+                    e.clientY <= rect.bottom
+                ) {
+                    const canvasPos = screenToCanvas(e.clientX, e.clientY);
+                    showCoordIndicator(canvasPos.x, canvasPos.y);
+                } else {
+                    hideCoordIndicator();
+                }
+                return;
+            }
+
+            const dx = e.clientX - dragStartMouseX;
+            const dy = e.clientY - dragStartMouseY;
+
+            if (!hasMoved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+                hasMoved = true;
+                // 拖动开始后隐藏提示
+                canvasHint.style.opacity = '0';
+            }
+
+            if (hasMoved) {
+                currentTranslateX = dragStartTranslateX + dx;
+                currentTranslateY = dragStartTranslateY + dy;
+                applyTransform();
+                // 更新坐标指示器
+                const canvasPos = screenToCanvas(e.clientX, e.clientY);
+                showCoordIndicator(canvasPos.x, canvasPos.y);
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (!isPanning) return;
+            isPanning = false;
+            editorArea.classList.remove('grabbing');
+
+            // 如果没有移动，且是双击，重置视图
+            if (!hasMoved && e.detail === 2) {
+                resetView();
+            }
+
+            // 延迟隐藏坐标指示器
+            if (coordTimer) clearTimeout(coordTimer);
+            coordTimer = setTimeout(() => {
+                coordIndicator.classList.remove('visible');
+            }, 1500);
+        });
+
+        // 滚轮缩放
+        editorArea.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = -e.deltaY;
+            // 使用指数缩放，更平滑
+            const factor = delta > 0 ? SCALE_STEP : 1 / SCALE_STEP;
+            const newScale = currentScale * factor;
+            zoomAtScreenPoint(e.clientX, e.clientY, newScale);
+
+            // 更新坐标指示器
+            const canvasPos = screenToCanvas(e.clientX, e.clientY);
+            showCoordIndicator(canvasPos.x, canvasPos.y);
+        }, { passive: false });
+
+        // 双击重置
+        editorArea.addEventListener('dblclick', (e) => {
+            // 如果点击的是缩放控件，不处理
+            if (e.target.closest('.zoom-controls')) return;
+            // 重置视图已在 mouseup 中通过 e.detail === 2 处理
+            // 这里做备用
+        });
+
+        // ============ 触摸事件处理 ============
+        editorArea.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.zoom-controls')) return;
+
+            activeTouches = e.touches.length;
+
+            if (e.touches.length === 1) {
+                // 单指 - 准备平移
+                const touch = e.touches[0];
+                dragStartMouseX = touch.clientX;
+                dragStartMouseY = touch.clientY;
+                dragStartTranslateX = currentTranslateX;
+                dragStartTranslateY = currentTranslateY;
+                isPanning = true;
+                hasMoved = false;
+            } else if (e.touches.length === 2) {
+                // 双指 - 准备缩放
+                isPanning = false;
+                const t0 = e.touches[0];
+                const t1 = e.touches[1];
+                touchStartDistance = Math.hypot(
+                    t1.clientX - t0.clientX,
+                    t1.clientY - t0.clientY
+                );
+                touchStartScale = currentScale;
+                touchStartMidX = (t0.clientX + t1.clientX) / 2;
+                touchStartMidY = (t0.clientY + t1.clientY) / 2;
+                touchStartTranslateX = currentTranslateX;
+                touchStartTranslateY = currentTranslateY;
+            }
+        }, { passive: false });
+
+        editorArea.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+
+            if (e.touches.length === 1 && isPanning) {
+                const touch = e.touches[0];
+                const dx = touch.clientX - dragStartMouseX;
+                const dy = touch.clientY - dragStartMouseY;
+
+                if (!hasMoved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+                    hasMoved = true;
+                    canvasHint.style.opacity = '0';
+                }
+
+                if (hasMoved) {
+                    currentTranslateX = dragStartTranslateX + dx;
+                    currentTranslateY = dragStartTranslateY + dy;
+                    applyTransform();
+                    const canvasPos = screenToCanvas(touch.clientX, touch.clientY);
+                    showCoordIndicator(canvasPos.x, canvasPos.y);
+                }
+            } else if (e.touches.length === 2) {
+                isPanning = false;
+                const t0 = e.touches[0];
+                const t1 = e.touches[1];
+                const currentDistance = Math.hypot(
+                    t1.clientX - t0.clientX,
+                    t1.clientY - t0.clientY
+                );
+                const currentMidX = (t0.clientX + t1.clientX) / 2;
+                const currentMidY = (t0.clientY + t1.clientY) / 2;
+
+                if (touchStartDistance > 0) {
+                    const scaleFactor = currentDistance / touchStartDistance;
+                    const newScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, touchStartScale * scaleFactor));
+
+                    // 以双指中点为缩放中心
+                    const rect = editorArea.getBoundingClientRect();
+                    const sx = touchStartMidX - rect.left;
+                    const sy = touchStartMidY - rect.top;
+                    const cx = (sx - touchStartTranslateX) / touchStartScale;
+                    const cy = (sy - touchStartTranslateY) / touchStartScale;
+
+                    currentScale = newScale;
+                    currentTranslateX = sx - cx * newScale;
+                    currentTranslateY = sy - cy * newScale;
+
+                    // 附加平移（双指中点移动）
+                    const midDx = currentMidX - touchStartMidX;
+                    const midDy = currentMidY - touchStartMidY;
+                    currentTranslateX += midDx;
+                    currentTranslateY += midDy;
+
+                    // 更新基准点
+                    touchStartMidX = currentMidX;
+                    touchStartMidY = currentMidY;
+                    touchStartTranslateX = currentTranslateX;
+                    touchStartTranslateY = currentTranslateY;
+                    touchStartScale = currentScale;
+                    touchStartDistance = currentDistance;
+
+                    applyTransform();
+                    const canvasPos = screenToCanvas(currentMidX, currentMidY);
+                    showCoordIndicator(canvasPos.x, canvasPos.y);
+                    canvasHint.style.opacity = '0';
+                }
+            }
+        }, { passive: false });
+
+        editorArea.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0) {
+                isPanning = false;
+                activeTouches = 0;
+                touchStartDistance = 0;
+                editorArea.classList.remove('grabbing');
+                if (coordTimer) clearTimeout(coordTimer);
+                coordTimer = setTimeout(() => {
+                    coordIndicator.classList.remove('visible');
+                }, 1500);
+            } else if (e.touches.length === 1) {
+                // 从双指变为单指
+                const touch = e.touches[0];
+                dragStartMouseX = touch.clientX;
+                dragStartMouseY = touch.clientY;
+                dragStartTranslateX = currentTranslateX;
+                dragStartTranslateY = currentTranslateY;
+                isPanning = true;
+                hasMoved = false;
+                touchStartDistance = 0;
+            }
+            activeTouches = e.touches.length;
+        });
+
+        // 阻止移动端浏览器的默认手势
+        editorArea.style.touchAction = 'none';
+
+        // ============ 缩放控件按钮 ============
+        zoomInBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const rect = editorArea.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            zoomAtScreenPoint(centerX, centerY, currentScale * SCALE_STEP);
+        });
+
+        zoomOutBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const rect = editorArea.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            zoomAtScreenPoint(centerX, centerY, currentScale / SCALE_STEP);
+        });
+
+        zoomResetBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetView();
+        });
+
+        zoomLabel.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetView();
+        });
+
+        // ============ 重置视图 ============
+        function resetView() {
+            const rect = editorArea.getBoundingClientRect();
+            const initTx = rect.width / 2 - CANVAS_CENTER;
+            const initTy = rect.height / 2 - CANVAS_CENTER;
+            currentTranslateX = initTx;
+            currentTranslateY = initTy;
+            currentScale = 1;
+            applyTransform();
+            canvasHint.style.opacity = '0.7';
+            hideCoordIndicator();
+        }
+
+        // ============ 窗口大小变化时重新计算初始视图 ============
+        let resizeDebounce = null;
+        window.addEventListener('resize', () => {
+            if (resizeDebounce) clearTimeout(resizeDebounce);
+            resizeDebounce = setTimeout(() => {
+                // 如果用户没有手动操作过，重新居中
+                // 这里保持当前视图，不做自动调整
+            }, 250);
+        });
+
+        // ============ 键盘快捷键 ============
+        window.addEventListener('keydown', (e) => {
+            // 如果焦点在输入框或其他元素上，不处理
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target
+                .isContentEditable) {
+                return;
+            }
+
+            switch (e.key) {
+                case '0':
+                    // 重置缩放
+                    if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+                        resetView();
+                    }
+                    break;
+                case '=':
+                case '+':
+                    // 放大
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        const rect = editorArea.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+                        zoomAtScreenPoint(centerX, centerY, currentScale * SCALE_STEP);
+                    }
+                    break;
+                case '-':
+                    // 缩小
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        const rect = editorArea.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+                        zoomAtScreenPoint(centerX, centerY, currentScale / SCALE_STEP);
+                    }
+                    break;
+                case 'Escape':
+                    // 重置视图
+                    resetView();
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        // ============ 侧边栏逻辑 ============
+        function isMobileViewport() {
+            return window.matchMedia('(max-width: 768px)').matches;
+        }
+
+        function updateSidebarUI() {
+            const collapsed = sidebar.classList.contains('collapsed');
+            toggleBtn.innerHTML = collapsed ? '&gt;' : '&lt;';
+            toggleBtn.setAttribute('aria-label', collapsed ? '展开侧边栏' : '收起侧边栏');
+
+            if (isMobileViewport()) {
+                if (!collapsed) {
+                    overlay.classList.add('visible');
+                } else {
+                    overlay.classList.remove('visible');
+                }
+            } else {
+                overlay.classList.remove('visible');
+            }
+        }
+
+        window.toggleSidebar = function() {
+            sidebar.classList.toggle('collapsed');
+            updateSidebarUI();
+            // 侧边栏变化后，编辑器区域尺寸可能变化，不需要重置但可以考虑微调
+        };
+
+        window.closeSidebarOnMobile = function() {
+            if (isMobileViewport() && !sidebar.classList.contains('collapsed')) {
+                sidebar.classList.add('collapsed');
+                updateSidebarUI();
+            }
+        };
+
+        // 监听窗口大小变化处理遮罩
+        window.addEventListener('resize', () => {
+            if (!sidebar.classList.contains('collapsed') && !isMobileViewport()) {
+                overlay.classList.remove('visible');
+            }
+            if (!sidebar.classList.contains('collapsed') && isMobileViewport()) {
+                overlay.classList.add('visible');
+            }
+        });
+
+        // ============ 导航功能 ============
+        window.goBack = function() {
+            window.location.href = '/';
+        };
+
+        window.exportProject = function() {
+            console.log('导出项目:', projectName);
+            fetch(`/api/dialog/project-content?projectName=${encodeURIComponent(projectName)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`服务器错误 (${response.status})`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const content = data.content;
+                        const blob = new Blob([content], { type: 'application/json' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${projectName}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        console.log('导出成功');
+                    } else {
+                        throw new Error(data.error || '未知错误');
+                    }
+                })
+                .catch(error => {
+                    console.error('导出失败:', error);
+                    alert('导出失败: ' + error.message);
+                });
+        };
+
+        // ============ 页面加载完成 ============
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('JSON 编辑器页面已加载');
+            console.log('当前项目:', projectName);
+            updateSidebarUI();
+            initCanvasView();
+            console.log('画布已初始化，支持拖拽平移和滚轮缩放');
+        });
+
+        // ============ 暴露API到全局 ============
+        window.editorAPI = {
+            getTransform: () => ({
+                translateX: currentTranslateX,
+                translateY: currentTranslateY,
+                scale: currentScale,
+            }),
+            setTransform: (tx, ty, scale) => {
+                currentTranslateX = tx;
+                currentTranslateY = ty;
+                currentScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, scale));
+                applyTransform();
+            },
+            resetView,
+            zoomAtScreenPoint,
+            screenToCanvas,
+            getCanvasSize: () => CANVAS_SIZE,
+            getCanvasCenter: () => CANVAS_CENTER,
+        };
+
+        console.log('编辑器API已暴露: window.editorAPI');
+        console.log('  - editorAPI.getTransform() 获取当前变换状态');
+        console.log('  - editorAPI.setTransform(tx, ty, scale) 设置变换');
+        console.log('  - editorAPI.resetView() 重置视图');
+        console.log('  - editorAPI.screenToCanvas(sx, sy) 屏幕坐标转画布坐标');
+    })();
+</script>
+</body>
+</html>

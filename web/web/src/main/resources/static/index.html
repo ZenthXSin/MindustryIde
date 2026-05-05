@@ -57,7 +57,7 @@
         /* 弹窗样式 - 支持多个位置 */
         .toast-container {
             position: fixed;
-            z-index: 9999;
+            z-index: 100000; /* 确保Toast容器在所有对话框之上 */
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -200,6 +200,41 @@
             background-color: #3574f0;
         }
 
+        /* 搜索下拉框样式 */
+        .dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .dropdown-item:hover {
+            background-color: #45494a;
+        }
+
+        .dropdown-item.selected {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        .dropdown-item.hidden {
+            display: none;
+        }
+
+        .no-results {
+            padding: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        /* 下拉列表显示状态 */
+        #classListDropdown.show {
+            display: block !important;
+        }
+
         /* 确认对话框特殊样式 */
         .toast-confirm {
             min-width: 350px;
@@ -268,7 +303,7 @@
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 10000;
+            /* z-index 由 JavaScript 动态设置 */
             opacity: 0;
             transition: opacity 0.2s ease;
         }
@@ -299,18 +334,14 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
-        }
-
-        .dialog-title-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            position: relative;
         }
 
         .dialog-title {
             font-size: 1.1rem;
             font-weight: 600;
             color: var(--text-primary);
+            flex: 1;
         }
 
         .dialog-close {
@@ -324,6 +355,8 @@
             height: 24px;
             line-height: 1;
             transition: color 0.15s ease;
+            flex-shrink: 0;
+            margin-left: 8px;
         }
 
         .dialog-close:hover {
@@ -368,14 +401,6 @@
             background-color: var(--accent-blue-hover);
         }
 
-        .dialog-icon {
-            font-size: 1.5rem;
-        }
-
-        .dialog-info .dialog-icon { color: #3574f0; }
-        .dialog-warning .dialog-icon { color: #ffa500; }
-        .dialog-error .dialog-icon { color: #ff4444; }
-        .dialog-success .dialog-icon { color: #59a869; }
 
         .button-list {
             display: flex;
@@ -532,36 +557,609 @@
 
         function handleNew() {
             console.log('Creating new project...');
-            // 显示居中确认对话框
-            showCenterDialog({
-                title: '新建项目',
-                message: '确定要创建新项目吗？当前未保存的更改将会丢失。',
-                type: 'WARNING',
-                buttons: [
-                    { text: '取消', action: 'onCancel' },
-                    { text: '确定', action: 'onConfirm', isPrimary: true }
-                ],
-                onConfirm: () => {
-                    showToast({
-                        title: '新建项目',
-                        message: '正在创建新项目...',
-                        type: 'SUCCESS',
-                        autoClose: 2000
-                    });
-                },
-                onCancel: () => {
-                    console.log('用户取消了新建项目');
+            // 显示新建项目对话框
+            fetch('/api/dialog/new-project', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                 }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('新建项目对话框已添加到队列，等待轮询显示...');
+                    // 注意：类列表将在对话框实际显示后由 showCenterDialog 自动加载
+                }
+            })
+            .catch(error => {
+                console.error('显示新建项目对话框失败:', error);
+            });
+        }
+        
+        // 全局变量存储所有类名
+        let allClassNames = [];
+        let dropdownEventBound = false; // 标记全局事件是否已绑定
+        
+        // 加载类列表用于新建项目对话框
+        function loadClassListForNewProject() {
+            console.log('开始加载类列表...');
+            fetch('/api/dialog/new-project/classes')
+                .then(response => {
+                    console.log('API 响应状态:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API 返回数据:', data);
+                    if (data.success && data.classes) {
+                        allClassNames = data.classes;
+                        console.log(`已加载 ${data.count} 个类:`, allClassNames);
+                        
+                        // 等待 DOM 更新后再初始化下拉框
+                        requestAnimationFrame(() => {
+                            initClassSearchDropdown();
+                        });
+                    } else {
+                        console.error('加载失败:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载类列表失败:', error);
+                });
+        }
+        
+        // 初始化类搜索下拉框
+        function initClassSearchDropdown(retryCount = 0) {
+            const searchInput = document.getElementById('classSearchInput');
+            const dropdown = document.getElementById('classListDropdown');
+            const hiddenSelect = document.getElementById('classSelect');
+            
+            if (!searchInput || !dropdown || !hiddenSelect) {
+                console.warn(`找不到搜索框元素 (尝试 ${retryCount + 1}/5):`, {
+                    searchInput: !!searchInput,
+                    dropdown: !!dropdown,
+                    hiddenSelect: !!hiddenSelect
+                });
+                
+                // 最多重试 5 次
+                if (retryCount < 5) {
+                    // 递增延迟重试：200ms, 400ms, 600ms, 800ms, 1000ms
+                    setTimeout(() => {
+                        initClassSearchDropdown(retryCount + 1);
+                    }, 200 * (retryCount + 1));
+                } else {
+                    console.error('重试 5 次后仍然找不到元素，请检查对话框是否正确显示');
+                }
+                return;
+            }
+            
+            console.log('成功找到所有搜索框元素');
+            
+            // 填充下拉列表
+            populateClassDropdown(allClassNames);
+            
+            // 只在第一次初始化时绑定全局事件
+            if (!dropdownEventBound) {
+                // 点击输入框显示/隐藏下拉列表
+                searchInput.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleDropdown();
+                });
+                
+                // 输入时过滤
+                searchInput.addEventListener('input', (e) => {
+                    filterClasses(e.target.value);
+                    const currentDropdown = document.getElementById('classListDropdown');
+                    if (currentDropdown && !currentDropdown.classList.contains('show')) {
+                        currentDropdown.classList.add('show');
+                    }
+                });
+                
+                // 键盘导航
+                searchInput.addEventListener('keydown', (e) => {
+                    handleKeyNavigation(e);
+                });
+                
+                // 点击外部关闭下拉列表（只绑定一次）
+                document.addEventListener('click', (e) => {
+                    const currentSearchInput = document.getElementById('classSearchInput');
+                    const currentDropdown = document.getElementById('classListDropdown');
+                    if (currentDropdown && currentSearchInput && 
+                        !currentSearchInput.contains(e.target) && 
+                        !currentDropdown.contains(e.target)) {
+                        hideDropdown();
+                    }
+                });
+                
+                dropdownEventBound = true;
+                console.log('下拉列表事件已绑定');
+            } else {
+                console.log('使用已绑定的事件');
+            }
+        }
+        
+        // 填充下拉列表
+        function populateClassDropdown(classNames) {
+            const dropdown = document.getElementById('classListDropdown');
+            if (!dropdown) {
+                console.error('找不到下拉列表元素');
+                return;
+            }
+            
+            console.log(`开始填充下拉列表，共 ${classNames.length} 个类`);
+            dropdown.innerHTML = '';
+            
+            if (classNames.length === 0) {
+                console.warn('类名列表为空');
+                const noData = document.createElement('div');
+                noData.className = 'no-results';
+                noData.textContent = '暂无可用类';
+                noData.style.cssText = 'padding: 12px; color: #808080; text-align: center; font-size: 0.85rem;';
+                dropdown.appendChild(noData);
+                return;
+            }
+            
+            classNames.forEach((className, index) => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.textContent = className;
+                item.style.cssText = 'padding: 8px 12px; cursor: pointer; transition: all 0.15s ease; font-family: "JetBrains Mono", monospace; font-size: 0.9rem; color: #a9b7c6;';
+                
+                // 鼠标悬停效果
+                item.onmouseover = function() {
+                    this.style.backgroundColor = '#45494a';
+                };
+                item.onmouseout = function() {
+                    if (!this.classList.contains('selected')) {
+                        this.style.backgroundColor = 'transparent';
+                    }
+                };
+                
+                // 点击选择
+                item.onclick = () => {
+                    selectClassItem(item, className);
+                };
+                
+                dropdown.appendChild(item);
+                
+                if (index < 3) {
+                    console.log(`添加第 ${index + 1} 个类:`, className);
+                }
+            });
+            
+            console.log('下拉列表填充完成');
+        }
+        
+        // 切换下拉列表显示状态
+        function toggleDropdown() {
+            const dropdown = document.getElementById('classListDropdown');
+            if (!dropdown) {
+                console.error('找不到下拉列表元素');
+                return;
+            }
+            
+            const isShowing = dropdown.classList.contains('show');
+            console.log(`切换下拉列表: ${isShowing ? '隐藏' : '显示'}`);
+            
+            dropdown.classList.toggle('show');
+            if (dropdown.classList.contains('show')) {
+                filterClasses('');
+            }
+        }
+        
+        // 隐藏下拉列表
+        function hideDropdown() {
+            const dropdown = document.getElementById('classListDropdown');
+            if (!dropdown) {
+                return; // 如果元素不存在，直接返回
+            }
+            dropdown.classList.remove('show');
+        }
+        
+        // 过滤类名
+        function filterClasses(searchText) {
+            const dropdown = document.getElementById('classListDropdown');
+            if (!dropdown) {
+                return; // 如果元素不存在，直接返回
+            }
+            
+            const items = dropdown.querySelectorAll('.dropdown-item');
+            const lowerSearch = searchText.toLowerCase();
+            let visibleCount = 0;
+            
+            items.forEach(item => {
+                const className = item.textContent.toLowerCase();
+                if (className.includes(lowerSearch)) {
+                    item.classList.remove('hidden');
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.classList.add('hidden');
+                    item.style.display = 'none';
+                }
+            });
+            
+            // 显示/隐藏无结果提示
+            let noResults = dropdown.querySelector('.no-results');
+            if (visibleCount === 0) {
+                if (!noResults) {
+                    noResults = document.createElement('div');
+                    noResults.className = 'no-results';
+                    noResults.textContent = '未找到匹配的类';
+                    noResults.style.cssText = 'padding: 12px; color: #808080; text-align: center; font-size: 0.85rem;';
+                    dropdown.appendChild(noResults);
+                }
+                noResults.style.display = 'block';
+            } else if (noResults) {
+                noResults.style.display = 'none';
+            }
+        }
+        
+        // 键盘导航
+        function handleKeyNavigation(e) {
+            const dropdown = document.getElementById('classListDropdown');
+            if (!dropdown) {
+                return; // 如果元素不存在，直接返回
+            }
+            
+            const visibleItems = Array.from(dropdown.querySelectorAll('.dropdown-item:not(.hidden)'));
+            
+            if (visibleItems.length === 0) return;
+            
+            const currentIndex = visibleItems.findIndex(item => item.classList.contains('selected'));
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const nextIndex = currentIndex < visibleItems.length - 1 ? currentIndex + 1 : 0;
+                selectItem(visibleItems[nextIndex], visibleItems);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prevIndex = currentIndex > 0 ? currentIndex - 1 : visibleItems.length - 1;
+                selectItem(visibleItems[prevIndex], visibleItems);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentIndex >= 0) {
+                    const selectedItem = visibleItems[currentIndex];
+                    const className = selectedItem.textContent;
+                    selectClassItem(selectedItem, className);
+                }
+            } else if (e.key === 'Escape') {
+                hideDropdown();
+            }
+        }
+        
+        // 选中某个选项
+        function selectItem(selectedItem, allItems) {
+            allItems.forEach(item => {
+                item.classList.remove('selected');
+                item.style.backgroundColor = 'transparent';
+            });
+            selectedItem.classList.add('selected');
+            selectedItem.style.backgroundColor = '#3574f0';
+            selectedItem.style.color = 'white';
+            selectedItem.scrollIntoView({ block: 'nearest' });
+        }
+        
+        // 选择类
+        function selectClassItem(item, className) {
+            const searchInput = document.getElementById('classSearchInput');
+            const hiddenSelect = document.getElementById('classSelect');
+            
+            searchInput.value = className;
+            hiddenSelect.value = className;
+            hideDropdown();
+        }
+        
+        // 处理创建项目（从对话框中调用）
+        function handleCreateProject() {
+            const projectNameInput = document.getElementById('projectNameInput');
+            const classSelect = document.getElementById('classSelect');
+            
+            if (!projectNameInput || !classSelect) {
+                console.error('找不到表单元素');
+                return;
+            }
+            
+            const projectName = projectNameInput.value.trim();
+            const className = classSelect.value;
+            
+            // 验证输入
+            if (!projectName) {
+                showToast({
+                    title: '错误',
+                    message: '请输入项目名称',
+                    type: 'ERROR',
+                    autoClose: 2000
+                });
+                return;
+            }
+            
+            if (!className) {
+                showToast({
+                    title: '错误',
+                    message: '请选择一个基础类',
+                    type: 'ERROR',
+                    autoClose: 2000
+                });
+                return;
+            }
+            
+            // 发送创建请求
+            fetch('/api/dialog/create-project', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    projectName: projectName,
+                    className: className
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('项目创建成功:', data);
+                    
+                    // 直接跳转，不关闭弹窗
+                    window.location.href = `/json-editor.html?project=${encodeURIComponent(projectName)}`;
+                } else {
+                    // 显示错误提示
+                    showToast({
+                        title: '错误',
+                        message: data.error || '创建项目失败',
+                        type: 'ERROR',
+                        autoClose: 4000
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('创建项目失败:', error);
+                showToast({
+                    title: '错误',
+                    message: '网络错误，请稍后重试',
+                    type: 'ERROR',
+                    autoClose: 4000
+                });
             });
         }
 
         function handleLoad() {
-            console.log('Loading project...');
-            showToast({
+            console.log('Loading projects...');
+            // 调用后端 API 获取项目列表
+            fetch('/api/dialog/project-list')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showProjectListDialog(data.projects);
+                    } else {
+                        showToast({
+                            title: '错误',
+                            message: '获取项目列表失败',
+                            type: 'ERROR',
+                            autoClose: 3000
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('获取项目列表失败:', error);
+                    showToast({
+                        title: '错误',
+                        message: '网络错误，请稍后重试',
+                        type: 'ERROR',
+                        autoClose: 3000
+                    });
+                });
+        }
+        
+        // 检查是否需要自动打开项目列表（从 URL 参数）
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('showProjects') === 'true') {
+                // 清除参数
+                window.history.replaceState({}, document.title, window.location.pathname);
+                // 延迟打开项目列表，确保页面完全加载
+                setTimeout(() => {
+                    handleLoad();
+                }, 300);
+            }
+        });
+        
+        // 显示项目列表对话框
+        function showProjectListDialog(projects) {
+            let message = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+            
+            if (projects.length === 0) {
+                message += '<div style="text-align: center; padding: 20px; color: #808080;">暂无项目</div>';
+            } else {
+                projects.forEach(projectName => {
+                    message += `
+                        <div style='
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            padding: 12px;
+                            background-color: #2b2d30;
+                            border: 1px solid #555555;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            transition: all 0.15s ease;
+                        '
+                        onmouseover="this.style.borderColor='#3574f0'; this.style.backgroundColor='#3c3f41'"
+                        onmouseout="this.style.borderColor='#555555'; this.style.backgroundColor='#2b2d30'">
+                            <span style='flex: 1; font-weight: 600;' onclick="openProject('${projectName}')">${projectName}</span>
+                            <div style='display: flex; gap: 8px;'>
+                                <button class='dialog-button' onclick="renameProjectPrompt('${projectName}')" style='padding: 4px 12px; font-size: 0.8rem;'>重命名</button>
+                                <button class='dialog-button' onclick="exportProjectFromList('${projectName}')" style='padding: 4px 12px; font-size: 0.8rem;'>导出</button>
+                                <button class='dialog-button' onclick="deleteProjectPrompt('${projectName}')" style='padding: 4px 12px; font-size: 0.8rem; color: #ff4444;'>删除</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            message += '</div>';
+            
+            // 显示对话框
+            showCenterDialog({
                 title: '加载项目',
-                message: '正在加载项目文件...',
+                message: message,
                 type: 'INFO',
-                autoClose: 2000
+                buttons: [
+                    { text: '关闭', action: 'onClose' }
+                ],
+                closable: true
+            });
+        }
+        
+        // 打开项目（跳转到编辑器）
+        function openProject(projectName) {
+            closeCenterDialog();
+            window.location.href = `/json-editor.html?project=${encodeURIComponent(projectName)}`;
+        }
+        
+        // 重命名项目提示
+        function renameProjectPrompt(projectName) {
+            const newName = prompt('请输入新的项目名称:', projectName);
+            if (newName && newName !== projectName) {
+                renameProject(projectName, newName);
+            }
+        }
+        
+        // 重命名项目
+        function renameProject(oldName, newName) {
+            fetch('/api/dialog/rename-project', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    oldName: oldName,
+                    newName: newName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast({
+                        title: '成功',
+                        message: data.message || '重命名成功',
+                        type: 'SUCCESS',
+                        autoClose: 1000
+                    });
+                    // 延迟刷新页面，并带上参数表示需要打开项目列表
+                    setTimeout(() => {
+                        window.location.href = '/?showProjects=true';
+                    }, 1000);
+                } else {
+                    showToast({
+                        title: '错误',
+                        message: data.error || '重命名失败',
+                        type: 'ERROR',
+                        autoClose: 3000
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('重命名失败:', error);
+                showToast({
+                    title: '错误',
+                    message: '网络错误，请稍后重试',
+                    type: 'ERROR',
+                    autoClose: 3000
+                });
+            });
+        }
+        
+        // 从列表导出项目
+        function exportProjectFromList(projectName) {
+            fetch(`/api/dialog/project-content?projectName=${encodeURIComponent(projectName)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const content = data.content;
+                        const blob = new Blob([content], { type: 'application/json' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${projectName}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        showToast({
+                            title: '成功',
+                            message: '导出成功',
+                            type: 'SUCCESS',
+                            autoClose: 2000
+                        });
+                    } else {
+                        showToast({
+                            title: '错误',
+                            message: data.error || '导出失败',
+                            type: 'ERROR',
+                            autoClose: 3000
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('导出失败:', error);
+                    showToast({
+                        title: '错误',
+                        message: '网络错误，请稍后重试',
+                        type: 'ERROR',
+                        autoClose: 3000
+                    });
+                });
+        }
+        
+        // 删除项目提示
+        function deleteProjectPrompt(projectName) {
+            if (confirm(`确定要删除项目 "${projectName}" 吗？此操作不可恢复。`)) {
+                deleteProject(projectName);
+            }
+        }
+        
+        // 删除项目
+        function deleteProject(projectName) {
+            fetch('/api/dialog/delete-project', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    projectName: projectName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast({
+                        title: '成功',
+                        message: data.message || '删除成功',
+                        type: 'SUCCESS',
+                        autoClose: 1000
+                    });
+                    // 延迟刷新页面，并带上参数表示需要打开项目列表
+                    setTimeout(() => {
+                        window.location.href = '/?showProjects=true';
+                    }, 1000);
+                } else {
+                    showToast({
+                        title: '错误',
+                        message: data.error || '删除失败',
+                        type: 'ERROR',
+                        autoClose: 3000
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('删除失败:', error);
+                showToast({
+                    title: '错误',
+                    message: '网络错误，请稍后重试',
+                    type: 'ERROR',
+                    autoClose: 3000
+                });
             });
         }
 
@@ -670,29 +1268,18 @@
         const activeToasts = new Map(); // 存储活跃的通知
         let toastIdCounter = 0;
         let lastCheckTime = 0; // 上次检查的时间戳
+        let baseZIndex = 10000; // 基础 z-index，用于所有弹窗统一管理
 
         // ========== 居中对话框系统 ==========
-        let activeDialog = null; // 当前活跃的居中对话框
+        let activeDialogs = []; // 当前活跃的居中对话框列表
 
-        // 获取图标
+        // 获取图标（已禁用，不再使用 emoji）
         function getToastIcon(type) {
-            const icons = {
-                'INFO': 'ℹ️',
-                'WARNING': '⚠️',
-                'ERROR': '❌',
-                'SUCCESS': '✅',
-                'CONFIRM': '❓'
-            };
-            return icons[type] || 'ℹ️';
+            return '';  // 不返回任何图标
         }
 
-        // 显示居中对话框（不会自动消失）
+        // 显示居中对话框(不会自动消失)
         function showCenterDialog(options) {
-            // 如果已有对话框，先关闭
-            if (activeDialog) {
-                closeCenterDialog();
-            }
-
             const {
                 title = '提示',
                 message = '',
@@ -704,23 +1291,20 @@
             // 创建遮罩层
             const overlay = document.createElement('div');
             overlay.className = 'dialog-overlay';
-            overlay.id = 'centerDialogOverlay';
+            overlay.id = 'centerDialogOverlay-' + Date.now(); // 唯一 ID
 
             // 创建对话框
             const dialog = document.createElement('div');
             dialog.className = `dialog-box dialog-${type.toLowerCase()}`;
-            dialog.id = 'centerDialogBox';
+            dialog.id = 'centerDialogBox-' + Date.now(); // 唯一 ID
 
             // 构建内容
             let html = `
                 <div class="dialog-header">
-                    <div class="dialog-title-wrapper">
-                        <span class="dialog-icon">${getToastIcon(type)}</span>
-                        <span class="dialog-title">${title}</span>
-                    </div>
+                    <span class="dialog-title">${title}</span>
             `;
 
-            // 添加关闭按钮
+            // 添加关闭按钮(右上角)
             if (closable) {
                 html += `<button class="dialog-close" onclick="closeCenterDialog()">&times;</button>`;
             }
@@ -744,36 +1328,59 @@
             dialog.innerHTML = html;
             overlay.appendChild(dialog);
             document.body.appendChild(overlay);
+            
+            // 设置动态 z-index，确保后创建的弹窗在上层（包括 Toast 和对话框）
+            baseZIndex += 10;
+            overlay.style.zIndex = baseZIndex.toString();
 
             // 触发动画
             requestAnimationFrame(() => {
                 overlay.classList.add('show');
-                // 动画完成后调整大小
-                setTimeout(() => {
-                    adjustDialogSize();
-                }, 200);
             });
 
-            // 保存引用
-            activeDialog = {
+            // 创建对话框对象
+            const dialogObj = {
                 overlay: overlay,
                 dialog: dialog,
                 options: options
             };
+            
+            // 添加到活跃对话框列表
+            activeDialogs.push(dialogObj);
 
-            // 点击遮罩层关闭（可选）
+            // 点击遮罩层关闭(可选)
             overlay.addEventListener('click', (e) => {
                 if (e.target === overlay && closable) {
-                    closeCenterDialog();
+                    closeCenterDialog(dialogObj);
                 }
             });
+            
+            // 特殊处理：如果是新建项目对话框，在显示后加载类列表
+            if (title === '新建项目') {
+                console.log('检测到新建项目对话框，准备加载类列表...');
+                // 等待动画完成后加载
+                setTimeout(() => {
+                    loadClassListForNewProject();
+                }, 200);
+            }
         }
 
         // 关闭居中对话框
-        function closeCenterDialog() {
-            if (!activeDialog) return;
+        function closeCenterDialog(dialogObj = null) {
+            // 如果没有指定对话框，关闭最上层的一个
+            if (!dialogObj) {
+                if (activeDialogs.length === 0) return;
+                dialogObj = activeDialogs[activeDialogs.length - 1];
+            }
 
-            const { overlay } = activeDialog;
+            // 特殊处理：如果是新建项目对话框，直接刷新页面
+            if (dialogObj.options && dialogObj.options.title === '新建项目') {
+                console.log('关闭新建项目对话框，刷新页面...');
+                window.location.reload();
+                return;
+            }
+
+            const { overlay } = dialogObj;
             overlay.classList.remove('show');
 
             // 动画结束后移除
@@ -781,15 +1388,30 @@
                 if (overlay.parentNode) {
                     overlay.parentNode.removeChild(overlay);
                 }
-                activeDialog = null;
+                // 从列表中移除
+                const index = activeDialogs.indexOf(dialogObj);
+                if (index > -1) {
+                    activeDialogs.splice(index, 1);
+                }
             }, 200);
         }
 
         // 处理对话框按钮操作
-        function handleDialogAction(action) {
-            if (!activeDialog) return;
+        function handleDialogAction(action, dialogObj = null) {
+            // 如果没有指定对话框，使用最上层的一个
+            if (!dialogObj) {
+                if (activeDialogs.length === 0) return;
+                dialogObj = activeDialogs[activeDialogs.length - 1];
+            }
 
-            const { options } = activeDialog;
+            const { options } = dialogObj;
+
+            // 特殊处理：新建项目的取消按钮 - 直接刷新页面
+            if (action === 'onCancel' && options.title === '新建项目') {
+                console.log('取消新建项目，刷新页面...');
+                window.location.reload();
+                return;
+            }
 
             // 执行自定义回调
             if (action === 'onConfirm' && options.onConfirm) {
@@ -797,9 +1419,15 @@
             } else if (action === 'onCancel' && options.onCancel) {
                 options.onCancel();
             }
+            
+            // 特殊处理：新建项目的创建按钮
+            if (action === 'onCreate') {
+                handleCreateProject();
+                return;
+            }
 
             // 默认关闭对话框
-            closeCenterDialog();
+            closeCenterDialog(dialogObj);
         }
 
         // 显示单个通知 - 每个通知有独立的生命周期
@@ -868,7 +1496,13 @@
             }
             
             toastEl.innerHTML = contentHtml;
-            container.appendChild(toastEl);
+            
+            // 使用 prepend 而不是 appendChild，让新的 Toast 显示在上面
+            container.prepend(toastEl);
+            
+            // 设置动态 z-index，确保后创建的在上层
+            baseZIndex++;
+            toastEl.style.zIndex = baseZIndex.toString();
             
             // 计算实际内容高度（包括所有子元素）
             // 使用 offsetHeight 获取完整高度
@@ -1010,7 +1644,21 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.dialog) {
-                        showToast(data.dialog);
+                        const dialog = data.dialog;
+                        // 根据 position 决定显示方式
+                        if (dialog.position === 'CENTER') {
+                            // 居中对话框
+                            showCenterDialog({
+                                title: dialog.title,
+                                message: dialog.message,
+                                type: dialog.type,
+                                buttons: dialog.buttons,
+                                closable: dialog.closable
+                            });
+                        } else {
+                            // 右上角 Toast
+                            showToast(dialog);
+                        }
                     }
                 })
                 .catch(error => {
