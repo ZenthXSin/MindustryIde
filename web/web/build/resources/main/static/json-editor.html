@@ -777,22 +777,36 @@
                 
                 html += `
                     <div style="padding: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span style="font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${field.name}</span>
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                    <span style="font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(field.name)}">${field.name}</span>
                                     <span style="font-size: 0.7rem; color: var(--text-secondary); background: var(--bg-secondary); padding: 1px 6px; border-radius: 3px;">${field.type}</span>
-                                    ${field.isRequired ? '<span style="color: orange; font-weight: bold;">*</span>' : ''}
-                                    ${isComplex && isAdded ? '<span onclick="tryExpandSubfields(\''+field.name+'\')" style="color: var(--accent-blue); cursor: pointer; font-size: 0.8rem;"></span>' : ''}
+                                    ${field.isRequired ? '<span style="color: orange; font-weight: bold;" title="必填字段">*</span>' : ''}
+                                    ${isAdded ? '<span style="font-size: 0.65rem; color: var(--success);">●</span>' : ''}
                                 </div>
-                                ${isAdded ? `<div style="font-size: 0.8rem; color: var(--success); margin-top: 4px;">值: ${escapeHtml(addedField.value)}</div>` : ''}
+                                ${field.notes || (field.defaultValue && field.defaultValue !== 'null') ? `
+                                    <div style="margin-top: 4px; background: var(--bg-secondary); padding: 6px 8px; border-radius: 3px; border-left: 2px solid var(--accent-blue);">
+                                        ${field.notes ? `
+                                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 3px;">
+                                                <span style="font-size: 0.65rem; font-weight: 600; color: var(--text-secondary);">📖 文档:</span>
+                                                <div style="margin-top: 2px; line-height: 1.4; word-break: break-word;">${escapeHtml(field.notes)}</div>
+                                            </div>
+                                        ` : ''}
+                                        ${field.defaultValue && field.defaultValue !== 'null' ? `
+                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                                <span style="font-size: 0.65rem; font-weight: 600; color: var(--text-secondary);">📝 默认值:</span>
+                                                <span style="margin-left: 4px; color: var(--success);">${escapeHtml(field.defaultValue)}</span>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                ` : ''}
                             </div>
-                            <div style="display: flex; gap: 4px; align-items: center;">
+                            <div style="display: flex; gap: 4px; align-items: center; flex-shrink: 0; margin-left: 8px;">
                                 ${isAdded ? `
-                                    <button onclick="editFieldValue('${field.name}', '${escapeHtml(addedField.value)}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--accent-blue); border: none; color: white; border-radius: 3px; cursor: pointer;"></button>
-                                    <button onclick="deleteField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--error); border: none; color: white; border-radius: 3px; cursor: pointer;"></button>
+                                    <button onclick="deleteField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--error); border: none; color: white; border-radius: 3px; cursor: pointer;" title="删除字段">×</button>
                                 ` : `
-                                    <button onclick="addField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--success); border: none; color: white; border-radius: 3px; cursor: pointer;">+</button>
+                                    <button onclick="addField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--success); border: none; color: white; border-radius: 3px; cursor: pointer;" title="添加字段">+</button>
                                 `}
                             </div>
                         </div>
@@ -822,15 +836,20 @@
                 showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
             }
         }
+        window.addField = addField;
 
-        function editFieldValue(fieldName, currentValue) {
-            const newValue = prompt(`修改 ${fieldName} 的值:`, currentValue);
-            if (newValue !== null && newValue !== currentValue) {
-                updateFieldValue(fieldName, newValue);
-            }
-        }
+        // 已删除 editFieldValue 函数，改为直接内联编辑
 
         async function updateFieldValue(fieldName, value) {
+            // 查找当前字段的旧值
+            const currentField = addedFields.find(f => f.name === fieldName);
+            if (!currentField) return;
+            
+            const oldValue = parseFieldValue(currentField.value, currentField.type);
+            
+            // 如果值没有改变，不发送请求
+            if (oldValue === value) return;
+            
             try {
                 const res = await fetch(`/api/dialog/project/${encodeURIComponent(projectName)}/field`, {
                     method: 'PUT',
@@ -843,11 +862,16 @@
                     fetchFields();
                 } else {
                     showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
+                    // 失败时重新渲染以恢复旧值
+                    fetchFields();
                 }
             } catch (err) {
                 showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
+                // 错误时重新渲染以恢复旧值
+                fetchFields();
             }
         }
+        window.updateFieldValue = updateFieldValue;
 
         async function deleteField(fieldName) {
             if (!confirm(`确定删除字段 ${fieldName}？`)) return;
@@ -868,6 +892,7 @@
                 showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
             }
         }
+        window.deleteField = deleteField;
 
         function tryExpandSubfields(fieldName) {
             showToast({ title: '提示', message: `暂不支持编辑 ${fieldName} 的子字段`, type: 'INFO', autoClose: 2000 });
@@ -875,6 +900,36 @@
 
         // ============ 画布卡片渲染 ============
         let cardPositions = new Map(); // 存储每个字段的自定义位置
+        
+        // 解析字段值，提取实际显示的字符串
+        function parseFieldValue(value, fieldType) {
+            if (!value || value === 'null' || value === '') return '';
+            
+            try {
+                // 尝试解析 JSON
+                const parsed = JSON.parse(value);
+                
+                // 如果是 String 类型，直接返回 value 字段的值
+                if (fieldType === 'String' && typeof parsed === 'object' && parsed.value !== undefined) {
+                    return parsed.value;
+                }
+                
+                // 如果是基本类型，尝试提取
+                if (typeof parsed === 'object' && parsed.value !== undefined) {
+                    return String(parsed.value);
+                }
+                
+                // 如果是对象，返回简化的表示
+                if (typeof parsed === 'object') {
+                    return JSON.stringify(parsed).substring(0, 50) + (JSON.stringify(parsed).length > 50 ? '...' : '');
+                }
+                
+                return String(parsed);
+            } catch (e) {
+                // 如果不是 JSON，直接返回原值
+                return value;
+            }
+        }
         
         function getCanvasCardPosition(index) {
             const cardHeight = 50;
@@ -901,6 +956,9 @@
                 
                 const isComplex = !['String','Boolean','Int','Float','Double','Long','Short','Byte','Char'].includes(field.type);
                 
+                // 解析实际显示的值
+                const displayValue = parseFieldValue(field.value, field.type);
+                
                 const cardEl = document.createElement('div');
                 cardEl.className = 'field-card-canvas';
                 cardEl.style.cssText = `
@@ -910,8 +968,9 @@
                     background: var(--bg-secondary); 
                     border: 1px solid var(--accent-blue); 
                     border-radius: 6px; 
-                    padding: 8px 12px; 
-                    min-width: 200px; 
+                    padding: 10px 12px; 
+                    min-width: 220px; 
+                    max-width: 320px;
                     cursor: grab; 
                     user-select: none; 
                     font-size: 0.8rem;
@@ -919,7 +978,7 @@
                 `;
                 
                 cardEl.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div>
                             <span style="font-weight: 600; color: var(--accent-blue);">${field.name}</span>
                             <span style="color: var(--text-secondary); margin-left: 8px; font-size: 0.7rem;">${field.type}</span>
@@ -928,8 +987,20 @@
                             style="background: transparent; border: none; color: var(--error); cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 0 4px;" 
                             title="删除字段">&times;</button>
                     </div>
-                    <div style="color: var(--success); margin-top: 4px; cursor: text;" onclick="event.stopPropagation(); editFieldValue('${field.name}', '${escapeHtml(field.value)}')">${escapeHtml(field.value)}</div>
-                    ${isComplex ? '<div style="color: var(--text-secondary); font-size: 0.65rem; margin-top: 2px;">可展开子字段 (暂不支持)</div>' : ''}
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap;">值:</label>
+                        <input type="text" 
+                            id="canvas-input-${field.name}" 
+                            value="${escapeHtml(displayValue)}" 
+                            placeholder="输入值..."
+                            style="flex: 1; min-width: 0; padding: 4px 8px; font-size: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 3px; color: var(--text-primary); outline: none; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='var(--accent-blue)'; this.style.boxShadow='0 0 0 2px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'"
+                            onkeydown="if(event.key==='Enter') { event.stopPropagation(); updateFieldValue('${field.name}', this.value); this.blur(); }"
+                            onchange="updateFieldValue('${field.name}', this.value)"
+                        />
+                    </div>
+                    ${isComplex ? '<div style="color: var(--text-secondary); font-size: 0.65rem; margin-top: 6px;">可展开子字段 (暂不支持)</div>' : ''}
                 `;
                 
                 // 添加拖拽功能
@@ -946,29 +1017,29 @@
             let initialLeft, initialTop;
             
             cardEl.addEventListener('mousedown', (e) => {
-                // 如果点击的是删除按钮或值编辑区域，不启动拖拽
+                // 如果点击的是删除按钮、输入框或其他交互元素，不启动拖拽
                 if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-                if (e.target.style.cursor === 'text') return;
+                if (e.target.tagName === 'INPUT' || e.target.closest('input')) return;
                 
-                e.preventDefault();
-                e.stopPropagation();
-                
+                // 只有点击卡片空白区域才启动拖拽
                 isDragging = true;
                 startX = e.clientX;
                 startY = e.clientY;
-                
-                const rect = cardEl.getBoundingClientRect();
-                const canvasRect = document.getElementById('editorArea').getBoundingClientRect();
                 
                 initialLeft = parseFloat(cardEl.style.left);
                 initialTop = parseFloat(cardEl.style.top);
                 
                 cardEl.style.cursor = 'grabbing';
                 cardEl.style.zIndex = '10';
+                
+                // 阻止拖拽时的默认行为和冒泡
+                e.preventDefault();
+                e.stopPropagation();
             });
             
             window.addEventListener('mousemove', (e) => {
                 if (!isDragging) return;
+                e.preventDefault();
                 
                 const dx = (e.clientX - startX) / currentScale;
                 const dy = (e.clientY - startY) / currentScale;
@@ -996,8 +1067,6 @@
                 });
             });
         }
-        
-        // 重置所有卡片位置
         window.resetCardPositions = function() {
             cardPositions.clear();
             renderCanvasCards();
@@ -1229,6 +1298,11 @@
             if (e.button !== 0) return;
             // 如果点击的是缩放控件，不处理
             if (e.target.closest('.zoom-controls')) return;
+            // 如果点击的是输入框、按钮或其他交互元素，不阻止默认行为
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || 
+                e.target.closest('input') || e.target.closest('button')) {
+                return;
+            }
 
             e.preventDefault();
             isPanning = true;
@@ -1687,10 +1761,6 @@
         window.renderFieldList = renderFieldList;
         window.renderCanvasCards = renderCanvasCards;
         window.resetCardPositions = resetCardPositions;
-        window.addField = addField;
-        window.editFieldValue = editFieldValue;
-        window.updateFieldValue = updateFieldValue;
-        window.deleteField = deleteField;
         window.tryExpandSubfields = tryExpandSubfields;
         window.showToast = showToast;
         window.closeToast = closeToast;

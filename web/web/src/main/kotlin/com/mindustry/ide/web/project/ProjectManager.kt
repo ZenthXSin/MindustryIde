@@ -108,8 +108,11 @@ object ProjectManager {
             ?: return mapOf("success" to false, "error" to "项目不存在: $projectName")
 
         val classBuild = storage.workFile.classBuild
+        // 使用简单类名（不含包名）来匹配 fieldDocs 中的键
+        val className = classBuild.classData.simpleName
+        
         val allFields = classBuild.getAllFields().map { field ->
-            val meta = Vars.parser.fieldDocs[classBuild.classData.name]?.get(field.name)
+            val meta = Vars.parser.fieldDocs[className]?.get(field.name)
             mapOf(
                 "name" to field.name,
                 "type" to field.type.simpleName,

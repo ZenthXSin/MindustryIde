@@ -567,7 +567,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    console.log('新建项目对话框已添加到队列，等待轮询显示...');
                     // 注意：类列表将在对话框实际显示后由 showCenterDialog 自动加载
                 }
             })
@@ -582,24 +581,16 @@
         
         // 加载类列表用于新建项目对话框
         function loadClassListForNewProject() {
-            console.log('开始加载类列表...');
             fetch('/api/dialog/new-project/classes')
-                .then(response => {
-                    console.log('API 响应状态:', response.status);
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    console.log('API 返回数据:', data);
                     if (data.success && data.classes) {
                         allClassNames = data.classes;
-                        console.log(`已加载 ${data.count} 个类:`, allClassNames);
                         
                         // 等待 DOM 更新后再初始化下拉框
                         requestAnimationFrame(() => {
                             initClassSearchDropdown();
                         });
-                    } else {
-                        console.error('加载失败:', data.error);
                     }
                 })
                 .catch(error => {
@@ -614,25 +605,15 @@
             const hiddenSelect = document.getElementById('classSelect');
             
             if (!searchInput || !dropdown || !hiddenSelect) {
-                console.warn(`找不到搜索框元素 (尝试 ${retryCount + 1}/5):`, {
-                    searchInput: !!searchInput,
-                    dropdown: !!dropdown,
-                    hiddenSelect: !!hiddenSelect
-                });
-                
                 // 最多重试 5 次
                 if (retryCount < 5) {
                     // 递增延迟重试：200ms, 400ms, 600ms, 800ms, 1000ms
                     setTimeout(() => {
                         initClassSearchDropdown(retryCount + 1);
                     }, 200 * (retryCount + 1));
-                } else {
-                    console.error('重试 5 次后仍然找不到元素，请检查对话框是否正确显示');
                 }
                 return;
             }
-            
-            console.log('成功找到所有搜索框元素');
             
             // 填充下拉列表
             populateClassDropdown(allClassNames);
@@ -671,9 +652,6 @@
                 });
                 
                 dropdownEventBound = true;
-                console.log('下拉列表事件已绑定');
-            } else {
-                console.log('使用已绑定的事件');
             }
         }
         
@@ -681,15 +659,12 @@
         function populateClassDropdown(classNames) {
             const dropdown = document.getElementById('classListDropdown');
             if (!dropdown) {
-                console.error('找不到下拉列表元素');
                 return;
             }
             
-            console.log(`开始填充下拉列表，共 ${classNames.length} 个类`);
             dropdown.innerHTML = '';
             
             if (classNames.length === 0) {
-                console.warn('类名列表为空');
                 const noData = document.createElement('div');
                 noData.className = 'no-results';
                 noData.textContent = '暂无可用类';
@@ -720,25 +695,15 @@
                 };
                 
                 dropdown.appendChild(item);
-                
-                if (index < 3) {
-                    console.log(`添加第 ${index + 1} 个类:`, className);
-                }
             });
-            
-            console.log('下拉列表填充完成');
         }
         
         // 切换下拉列表显示状态
         function toggleDropdown() {
             const dropdown = document.getElementById('classListDropdown');
             if (!dropdown) {
-                console.error('找不到下拉列表元素');
                 return;
             }
-            
-            const isShowing = dropdown.classList.contains('show');
-            console.log(`切换下拉列表: ${isShowing ? '隐藏' : '显示'}`);
             
             dropdown.classList.toggle('show');
             if (dropdown.classList.contains('show')) {
@@ -1357,7 +1322,6 @@
             
             // 特殊处理：如果是新建项目对话框，在显示后加载类列表
             if (title === '新建项目') {
-                console.log('检测到新建项目对话框，准备加载类列表...');
                 // 等待动画完成后加载
                 setTimeout(() => {
                     loadClassListForNewProject();
@@ -1375,7 +1339,6 @@
 
             // 特殊处理：如果是新建项目对话框，直接刷新页面
             if (dialogObj.options && dialogObj.options.title === '新建项目') {
-                console.log('关闭新建项目对话框，刷新页面...');
                 window.location.reload();
                 return;
             }
@@ -1408,7 +1371,6 @@
 
             // 特殊处理：新建项目的取消按钮 - 直接刷新页面
             if (action === 'onCancel' && options.title === '新建项目') {
-                console.log('取消新建项目，刷新页面...');
                 window.location.reload();
                 return;
             }

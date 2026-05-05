@@ -62,9 +62,7 @@ abstract class JsonEditorTool(val parser: IJsonParser) {
                         FieldBuild(it, parser)
                     })
             )
-        }
-        info("为Class: ${jsonWorkFile.classBuild.classData.simpleName}添加Field: ${jsonWorkFile.classBuild.fieldBuilds.last().field.name}")
-    }
+        }}
 
     fun setFieldBuild(name: String, set: FieldBuild.() -> Unit) {
         val fieldBuild = jsonWorkFile.classBuild.getFieldBuildByName(name)

@@ -225,7 +225,7 @@ class FieldBuild(
         )
 
         fun getDefaultForClass(clazz: Class<*>): String {
-            return defaultValues[clazz]?.invoke() ?: ""
+            return defaultValues[clazz]?.invoke() ?: "null"
         }
     }
 }
@@ -240,15 +240,22 @@ class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> Strin
 
     fun toJson(): String {
         return run(this) ?: when {
-            value.isNotEmpty() -> if (value.isBooleanString()) {
-                value
-            } else if (value.isNumber()) {
-                value
-            } else {
-                "\"$value\""
+            // 值非空：可能是布尔、数字或普通字符串
+            value.isNotEmpty() -> {
+                if (value.isBooleanString()) value
+                else if (value.isNumber()) value
+                else "\"$value\""
             }
-
-            typeValue is ClassBuild -> (typeValue as ClassBuild).toJson()
+            // 值空：检查是否为复杂类型
+            typeValue is ClassBuild -> {
+                // 对于 String 类型的 ClassBuild，直接输出空字符串（或 value 字段）
+                if ((typeValue as ClassBuild).classData == String::class.java) {
+                    if (value.isEmpty()) value = "null"
+                    "\"$value\""  // 此时 value 为空字符串，输出 ""
+                } else {
+                    (typeValue as ClassBuild).toJson()
+                }
+            }
             else -> typeValue?.toString() ?: "null"
         }
     }
@@ -256,8 +263,14 @@ class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> Strin
     fun getString(): String {
         return run(this) ?: when {
             value.isNotEmpty() -> value
-            typeValue is ClassBuild -> (typeValue as ClassBuild).toString()
-            else -> typeValue?.toString() ?: ""
+            typeValue is ClassBuild -> {
+                if ((typeValue as ClassBuild).classData == String::class.java) {
+                    value
+                } else {
+                    (typeValue as ClassBuild).toString()
+                }
+            }
+            else -> typeValue?.toString() ?: "null"
         }
     }
 
