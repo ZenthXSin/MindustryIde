@@ -1,0 +1,93 @@
+/* ===== Button System ===== */
+.button-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    width: 100%;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.action-button:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: white;
+    transform: translateY(-1px);
+    width: 100%;
+}
+
+.action-button:active {
+    background-color: var(--bg-tertiary);
+    transform: translateY(0) scale(0.98);
+}
+
+/* ===== Expandable Sections ===== */
+.more-options {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                margin-top 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 0;
+    will-change: max-height, opacity, margin-top;
+}
+
+.more-options.show {
+    max-height: 250px;
+    opacity: 1;
+    margin-top: var(--space-sm);
+}
+
+/* 内部按钮也需要动画 */
+.more-options .action-button {
+    transition: all var(--transition-fast),
+                opacity 0.2s ease,
+                transform 0.2s ease;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.more-options.show .action-button {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 按钮依次出现 */
+.more-options.show .more-row .action-button:nth-child(1) {
+    transition-delay: 0.05s;
+}
+
+.more-options.show .more-row .action-button:nth-child(2) {
+    transition-delay: 0.1s;
+}
+
+.more-options.show .action-button:nth-child(2) {
+    transition-delay: 0.15s;
+}
+
+.more-row {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.more-row .action-button {
+    flex: 1;
+}
