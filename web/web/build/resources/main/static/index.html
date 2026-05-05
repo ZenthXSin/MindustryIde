@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mindustry IDE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #2b2d30;
+            --bg-secondary: #3c3f41;
+            --accent-blue: #3574f0;
+            --accent-blue-hover: #4a85f5;
+            --text-primary: #a9b7c6;
+            --text-secondary: #808080;
+            --border-color: #555555;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+        }
+
+        .version {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 50px;
+        }
+
+        /* 弹窗样式 - 支持多个位置 */
+        .toast-container {
+            position: fixed;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            max-width: 420px;
+        }
+
+        /* 右上角（默认） */
+        .toast-container.top-right {
+            top: 20px;
+            right: 20px;
+        }
+
+        /* 左上角 */
+        .toast-container.top-left {
+            top: 20px;
+            left: 20px;
+        }
+
+        /* 右下角 */
+        .toast-container.bottom-right {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        /* 左下角 */
+        .toast-container.bottom-left {
+            bottom: 20px;
+            left: 20px;
+        }
+
+        .toast-dialog {
+            min-width: 280px;
+            max-width: 420px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            padding: 12px 16px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast-dialog.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast-dialog.hide {
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toast-icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+        }
+
+        .toast-text {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .toast-message {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 2px 4px;
+            margin: -2px;
+            width: 20px;
+            height: 20px;
+            line-height: 1;
+            flex-shrink: 0;
+            border-radius: 3px;
+            transition: color 0.15s ease,
+                        background-color 0.15s ease;
+        }
+
+        .toast-close:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 不同类型样式 */
+        .toast-success .toast-icon {
+            background-color: #59a869;
+        }
+
+        .toast-error .toast-icon {
+            background-color: #ff4444;
+        }
+
+        .toast-warning .toast-icon {
+            background-color: #ffa500;
+        }
+
+        .toast-info .toast-icon {
+            background-color: #3574f0;
+        }
+
+        /* 确认对话框特殊样式 */
+        .toast-confirm {
+            min-width: 350px;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .toast-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .toast-btn {
+            padding: 6px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.1s ease,
+                        transform 0.05s ease;
+            background-color: transparent;
+            color: var(--text-primary);
+        }
+
+        .toast-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .toast-btn:active {
+            transform: scale(0.97);
+        }
+
+        .toast-btn-cancel {
+            color: var(--text-secondary);
+        }
+
+        .toast-btn-cancel:hover {
+            color: var(--text-primary);
+        }
+
+        .toast-btn-confirm {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+            font-weight: 600;
+        }
+
+        .toast-btn-confirm:hover {
+            background-color: var(--accent-blue-hover);
+            border-color: var(--accent-blue-hover);
+        }
+
+        /* ===== 居中对话框样式 ===== */
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .dialog-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .dialog-box {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            min-width: 400px;
+            max-width: 600px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dialog-overlay.show .dialog-box {
+            transform: scale(1);
+        }
+
+        .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .dialog-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dialog-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .dialog-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            line-height: 1;
+            transition: color 0.15s ease;
+        }
+
+        .dialog-close:hover {
+            color: var(--text-primary);
+        }
+
+        .dialog-content {
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .dialog-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .dialog-button {
+            padding: 8px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background-color: transparent;
+            color: var(--text-primary);
+        }
+
+        .dialog-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dialog-button.primary {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .dialog-button.primary:hover {
+            background-color: var(--accent-blue-hover);
+        }
+
+        .dialog-icon {
+            font-size: 1.5rem;
+        }
+
+        .dialog-info .dialog-icon { color: #3574f0; }
+        .dialog-warning .dialog-icon { color: #ffa500; }
+        .dialog-error .dialog-icon { color: #ff4444; }
+        .dialog-success .dialog-icon { color: #59a869; }
+
+        .button-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .more-options {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+                        opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                        margin-top 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 0;
+        }
+
+        .more-options.show {
+            max-height: 180px;
+            opacity: 1;
+            margin-top: 8px;
+        }
+
+        .more-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .more-row .action-button {
+            flex: 1;
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            background-color: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+            width: 100%;
+        }
+
+        .action-button:hover {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-color);
+            color: white;
+        }
+
+        .action-button:active {
+            background-color: #4e5254;
+            transform: scale(0.98);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            .logo {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="logo">Mindustry IDE</h1>
+        <p class="version">demo</p>
+
+        <div class="button-list">
+            <button class="action-button" onclick="handleStart()" id="startBtn">
+                开始
+            </button>
+            
+            <div class="more-options" id="startOptions">
+                <div class="more-row">
+                    <button class="action-button" onclick="handleNew()">
+                        新建
+                    </button>
+                    
+                    <button class="action-button" onclick="handleLoad()">
+                        加载
+                    </button>
+                </div>
+                
+                <button class="action-button" onclick="handleImport()">
+                    导入
+                </button>
+            </div>
+            
+            <button class="action-button" onclick="handleTools()">
+                工具
+            </button>
+            
+            <button class="action-button" onclick="handleMore()" id="moreBtn">
+                更多
+            </button>
+            
+            <div class="more-options" id="moreOptions">
+                <div class="more-row">
+                    <button class="action-button" onclick="handleLMM()">
+                        LMM
+                    </button>
+                    
+                    <button class="action-button" onclick="handleQQ()">
+                        QQ
+                    </button>
+                </div>
+                
+                <button class="action-button" onclick="handleGithub()">
+                    Github
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右上角通知容器（默认） -->
+    <div class="toast-container top-right" id="toastContainerTopRight"></div>
+    
+    <!-- 左上角通知容器 -->
+    <div class="toast-container top-left" id="toastContainerTopLeft"></div>
+    
+    <!-- 右下角通知容器 -->
+    <div class="toast-container bottom-right" id="toastContainerBottomRight"></div>
+    
+    <!-- 左下角通知容器 -->
+    <div class="toast-container bottom-left" id="toastContainerBottomLeft"></div>
+
+    <script>
+        function handleStart() {
+            const options = document.getElementById('startOptions');
+            const startBtn = document.getElementById('startBtn');
+            
+            if (options.classList.contains('show')) {
+                options.classList.remove('show');
+                startBtn.textContent = '开始';
+            } else {
+                // 先收起其他展开的选项
+                document.getElementById('moreOptions').classList.remove('show');
+                document.getElementById('moreBtn').textContent = '更多';
+                
+                options.classList.add('show');
+                startBtn.textContent = '收起';
+            }
+        }
+
+        function handleNew() {
+            console.log('Creating new project...');
+            // 显示居中确认对话框
+            showCenterDialog({
+                title: '新建项目',
+                message: '确定要创建新项目吗？当前未保存的更改将会丢失。',
+                type: 'WARNING',
+                buttons: [
+                    { text: '取消', action: 'onCancel' },
+                    { text: '确定', action: 'onConfirm', isPrimary: true }
+                ],
+                onConfirm: () => {
+                    showToast({
+                        title: '新建项目',
+                        message: '正在创建新项目...',
+                        type: 'SUCCESS',
+                        autoClose: 2000
+                    });
+                },
+                onCancel: () => {
+                    console.log('用户取消了新建项目');
+                }
+            });
+        }
+
+        function handleLoad() {
+            console.log('Loading project...');
+            showToast({
+                title: '加载项目',
+                message: '正在加载项目文件...',
+                type: 'INFO',
+                autoClose: 2000
+            });
+        }
+
+        function handleImport() {
+            console.log('Importing project...');
+            showToast({
+                title: '导入项目',
+                message: '正在导入项目数据...',
+                type: 'INFO',
+                autoClose: 2000
+            });
+        }
+
+        function handleTools() {
+            console.log('Opening tools...');
+            // 调用后端 API 显示工具列表弹窗
+            fetch('/api/dialog/tools', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('工具列表已加载');
+                }
+            })
+            .catch(error => {
+                console.error('加载工具列表失败:', error);
+            });
+        }
+        
+        // 使用工具（从工具列表弹窗中调用）
+        function useTool(toolId) {
+            console.log('使用工具:', toolId);
+            
+            // 根据工具 ID 执行相应操作
+            if (toolId === 'doc-query') {
+                // 关闭当前对话框
+                closeCenterDialog();
+                
+                // 跳转到文档查询器页面
+                window.location.href = '/doc-query.html';
+            } else {
+                // 其他工具的默认处理
+                closeCenterDialog();
+                showToast({
+                    title: '工具',
+                    message: `正在打开工具: ${toolId}`,
+                    type: 'INFO',
+                    autoClose: 2000
+                });
+            }
+        }
+
+        function handleMore() {
+            const options = document.getElementById('moreOptions');
+            const moreBtn = document.getElementById('moreBtn');
+            
+            if (options.classList.contains('show')) {
+                options.classList.remove('show');
+                moreBtn.textContent = '更多';
+            } else {
+                options.classList.add('show');
+                moreBtn.textContent = '收起';
+            }
+        }
+
+        function handleLMM() {
+            console.log('Opening LMM...');
+            window.open('https://learn-mindustry-mod.github.io/', '_blank');
+        }
+
+        function handleQQ() {
+            console.log('Opening QQ...');
+            window.open('https://qm.qq.com/q/RiTMX8bRus', '_blank');
+        }
+
+        function handleGithub() {
+            console.log('Opening Github...');
+            window.open('https://github.com/ZenthXSin/MindustryIde', '_blank');
+        }
+
+        // 点击页面其他地方时自动收起
+        document.addEventListener('click', function(event) {
+            const startOptions = document.getElementById('startOptions');
+            const startBtn = document.getElementById('startBtn');
+            const moreOptions = document.getElementById('moreOptions');
+            const moreBtn = document.getElementById('moreBtn');
+            
+            // 如果点击的不是开始按钮或其子元素，且选项是展开状态
+            if (!startBtn.contains(event.target) && !startOptions.contains(event.target) && startOptions.classList.contains('show')) {
+                startOptions.classList.remove('show');
+                startBtn.textContent = '开始';
+            }
+            
+            // 如果点击的不是更多按钮或其子元素，且选项是展开状态
+            if (!moreBtn.contains(event.target) && !moreOptions.contains(event.target) && moreOptions.classList.contains('show')) {
+                moreOptions.classList.remove('show');
+                moreBtn.textContent = '更多';
+            }
+        });
+
+        // ========== 右上角通知系统 ==========
+        const activeToasts = new Map(); // 存储活跃的通知
+        let toastIdCounter = 0;
+        let lastCheckTime = 0; // 上次检查的时间戳
+
+        // ========== 居中对话框系统 ==========
+        let activeDialog = null; // 当前活跃的居中对话框
+
+        // 获取图标
+        function getToastIcon(type) {
+            const icons = {
+                'INFO': 'ℹ️',
+                'WARNING': '⚠️',
+                'ERROR': '❌',
+                'SUCCESS': '✅',
+                'CONFIRM': '❓'
+            };
+            return icons[type] || 'ℹ️';
+        }
+
+        // 显示居中对话框（不会自动消失）
+        function showCenterDialog(options) {
+            // 如果已有对话框，先关闭
+            if (activeDialog) {
+                closeCenterDialog();
+            }
+
+            const {
+                title = '提示',
+                message = '',
+                type = 'INFO',
+                buttons = [],
+                closable = true
+            } = options;
+
+            // 创建遮罩层
+            const overlay = document.createElement('div');
+            overlay.className = 'dialog-overlay';
+            overlay.id = 'centerDialogOverlay';
+
+            // 创建对话框
+            const dialog = document.createElement('div');
+            dialog.className = `dialog-box dialog-${type.toLowerCase()}`;
+            dialog.id = 'centerDialogBox';
+
+            // 构建内容
+            let html = `
+                <div class="dialog-header">
+                    <div class="dialog-title-wrapper">
+                        <span class="dialog-icon">${getToastIcon(type)}</span>
+                        <span class="dialog-title">${title}</span>
+                    </div>
+            `;
+
+            // 添加关闭按钮
+            if (closable) {
+                html += `<button class="dialog-close" onclick="closeCenterDialog()">&times;</button>`;
+            }
+
+            html += '</div>';
+
+            // 添加内容
+            html += `<div class="dialog-content">${message}</div>`;
+
+            // 添加按钮
+            if (buttons && buttons.length > 0) {
+                html += '<div class="dialog-footer">';
+                buttons.forEach(btn => {
+                    const btnClass = btn.isPrimary ? 'dialog-button primary' : 'dialog-button';
+                    const action = btn.action || '';
+                    html += `<button class="${btnClass}" onclick="handleDialogAction('${action}')">${btn.text}</button>`;
+                });
+                html += '</div>';
+            }
+
+            dialog.innerHTML = html;
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+
+            // 触发动画
+            requestAnimationFrame(() => {
+                overlay.classList.add('show');
+                // 动画完成后调整大小
+                setTimeout(() => {
+                    adjustDialogSize();
+                }, 200);
+            });
+
+            // 保存引用
+            activeDialog = {
+                overlay: overlay,
+                dialog: dialog,
+                options: options
+            };
+
+            // 点击遮罩层关闭（可选）
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay && closable) {
+                    closeCenterDialog();
+                }
+            });
+        }
+
+        // 关闭居中对话框
+        function closeCenterDialog() {
+            if (!activeDialog) return;
+
+            const { overlay } = activeDialog;
+            overlay.classList.remove('show');
+
+            // 动画结束后移除
+            setTimeout(() => {
+                if (overlay.parentNode) {
+                    overlay.parentNode.removeChild(overlay);
+                }
+                activeDialog = null;
+            }, 200);
+        }
+
+        // 处理对话框按钮操作
+        function handleDialogAction(action) {
+            if (!activeDialog) return;
+
+            const { options } = activeDialog;
+
+            // 执行自定义回调
+            if (action === 'onConfirm' && options.onConfirm) {
+                options.onConfirm();
+            } else if (action === 'onCancel' && options.onCancel) {
+                options.onCancel();
+            }
+
+            // 默认关闭对话框
+            closeCenterDialog();
+        }
+
+        // 显示单个通知 - 每个通知有独立的生命周期
+        function showToast(toastData) {
+            // 根据位置参数选择对应的容器
+            const position = toastData.position || 'TOP_RIGHT';
+            let containerId;
+            
+            switch(position) {
+                case 'TOP_LEFT':
+                    containerId = 'toastContainerTopLeft';
+                    break;
+                case 'BOTTOM_RIGHT':
+                    containerId = 'toastContainerBottomRight';
+                    break;
+                case 'BOTTOM_LEFT':
+                    containerId = 'toastContainerBottomLeft';
+                    break;
+                case 'TOP_RIGHT':
+                default:
+                    containerId = 'toastContainerTopRight';
+                    break;
+            }
+            
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error('Toast container not found:', containerId);
+                return null;
+            }
+            
+            const toastId = 'toast-' + (++toastIdCounter);
+            
+            // 创建通知元素
+            const toastEl = document.createElement('div');
+            toastEl.id = toastId;
+            toastEl.className = `toast-dialog toast-${toastData.type.toLowerCase()}`;
+            if (toastData.type === 'CONFIRM') {
+                toastEl.classList.add('toast-confirm');
+            }
+            
+            // 构建内容
+            let contentHtml = `
+                <div class="toast-content">
+                    <div class="toast-icon">${getToastIcon(toastData.type)}</div>
+                    <div class="toast-text">
+                        <div class="toast-title">${toastData.title}</div>
+                        <div class="toast-message">${toastData.message}</div>
+                    </div>
+            `;
+            
+            // 添加关闭按钮（如果可关闭）
+            if (toastData.closable !== false) {
+                contentHtml += `<button class="toast-close" onclick="closeToast('${toastId}')">&times;</button>`;
+            }
+            contentHtml += '</div>';
+            
+            // 如果是确认对话框，添加按钮
+            if (toastData.type === 'CONFIRM' && toastData.buttons && toastData.buttons.length > 0) {
+                contentHtml += '<div class="toast-actions">';
+                toastData.buttons.forEach(btn => {
+                    const btnClass = btn.isPrimary ? 'toast-btn toast-btn-confirm' : 'toast-btn toast-btn-cancel';
+                    const action = btn.action === 'onConfirm' ? `confirmToast('${toastId}')` : `cancelToast('${toastId}')`;
+                    contentHtml += `<button class="${btnClass}" onclick="${action}">${btn.text}</button>`;
+                });
+                contentHtml += '</div>';
+            }
+            
+            toastEl.innerHTML = contentHtml;
+            container.appendChild(toastEl);
+            
+            // 计算实际内容高度（包括所有子元素）
+            // 使用 offsetHeight 获取完整高度
+            const actualHeight = toastEl.offsetHeight;
+            
+            // 使用 CSS transition 实现流畅的高度动画
+            // 先设置为 0 高度（隐藏状态）
+            toastEl.style.maxHeight = '0';
+            toastEl.style.opacity = '0';
+            toastEl.style.transform = 'translateX(100%)';
+            toastEl.style.marginBottom = '-12px';
+            toastEl.style.paddingTop = '0';
+            toastEl.style.paddingBottom = '0';
+            
+            // 下一帧开始动画 - 展开到实际高度
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    toastEl.style.maxHeight = actualHeight + 'px';
+                    toastEl.style.opacity = '1';
+                    toastEl.style.transform = 'translateX(0)';
+                    toastEl.style.marginBottom = '0';
+                    toastEl.style.paddingTop = '';
+                    toastEl.style.paddingBottom = '';
+                    toastEl.classList.add('show');
+                });
+            });
+            
+            // 创建独立的生命周期管理器
+            const lifecycle = {
+                element: toastEl,
+                data: toastData,
+                timerId: null,
+                createdAt: Date.now(),
+                isClosing: false
+            };
+            
+            activeToasts.set(toastId, lifecycle);
+            
+            // 设置自动关闭定时器（独立生命周期）
+            if (toastData.autoClose > 0) {
+                lifecycle.timerId = setTimeout(() => {
+                    closeToast(toastId);
+                }, toastData.autoClose);
+                
+                // 添加鼠标悬浮事件，暂停并重启计时器
+                toastEl.addEventListener('mouseenter', () => {
+                    // 鼠标进入时清除定时器
+                    if (lifecycle.timerId) {
+                        clearTimeout(lifecycle.timerId);
+                        lifecycle.timerId = null;
+                    }
+                });
+                
+                toastEl.addEventListener('mouseleave', () => {
+                    // 鼠标离开时重启定时器
+                    if (!lifecycle.isClosing && !lifecycle.timerId) {
+                        lifecycle.timerId = setTimeout(() => {
+                            closeToast(toastId);
+                        }, toastData.autoClose);
+                    }
+                });
+            }
+            
+            return toastId;
+        }
+
+        // 关闭通知 - 平滑退出动画
+        function closeToast(toastId) {
+            const lifecycle = activeToasts.get(toastId);
+            if (!lifecycle || lifecycle.isClosing) return;
+            
+            lifecycle.isClosing = true;
+            const toastEl = lifecycle.element;
+            
+            // 清除自动关闭定时器
+            if (lifecycle.timerId) {
+                clearTimeout(lifecycle.timerId);
+                lifecycle.timerId = null;
+            }
+            
+            // 执行退出动画
+            toastEl.style.maxHeight = '0';
+            toastEl.style.opacity = '0';
+            toastEl.style.transform = 'translateX(100%)';
+            toastEl.style.marginBottom = '-12px';
+            toastEl.style.paddingTop = '0';
+            toastEl.style.paddingBottom = '0';
+            toastEl.classList.remove('show');
+            toastEl.classList.add('hide');
+            
+            // 动画结束后从 DOM 移除
+            setTimeout(() => {
+                if (toastEl.parentNode) {
+                    toastEl.parentNode.removeChild(toastEl);
+                }
+                activeToasts.delete(toastId);
+            }, 300); // 与 CSS transition 时间匹配
+        }
+
+        // 确认操作
+        function confirmToast(toastId) {
+            const toast = activeToasts.get(toastId);
+            if (toast && toast.data.buttons) {
+                const confirmBtn = toast.data.buttons.find(b => b.action === 'onConfirm');
+                if (confirmBtn) {
+                    console.log('Confirmed:', toastId);
+                }
+            }
+            closeToast(toastId);
+        }
+
+        // 取消操作
+        function cancelToast(toastId) {
+            const toast = activeToasts.get(toastId);
+            if (toast && toast.data.buttons) {
+                const cancelBtn = toast.data.buttons.find(b => b.action === 'onCancel');
+                if (cancelBtn) {
+                    console.log('Cancelled:', toastId);
+                }
+            }
+            closeToast(toastId);
+        }
+
+        // 批量显示通知
+        function showToasts(dialogs) {
+            if (!dialogs || dialogs.length === 0) return;
+            
+            dialogs.forEach((dialog, index) => {
+                // 延迟显示以产生堆叠效果
+                setTimeout(() => {
+                    showToast(dialog);
+                }, index * 150); // 增加间隔让动画更流畅
+            });
+        }
+
+        // 轮询检查新弹窗 - 使用时间戳避免重复处理
+        function checkForDialogs() {
+            fetch('/api/dialog/next')  // 改为每次只取一个
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.dialog) {
+                        showToast(data.dialog);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking dialogs:', error);
+                });
+        }
+
+        // 每300ms检查一次新弹窗（提高响应速度）
+        setInterval(checkForDialogs, 300);
+    </script>
+</body>
+</html>

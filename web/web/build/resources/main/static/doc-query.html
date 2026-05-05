@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档查询器 - Mindustry IDE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #2b2d30;
+            --bg-secondary: #3c3f41;
+            --bg-tertiary: #45494a;
+            --accent-blue: #3574f0;
+            --accent-blue-hover: #4a85f5;
+            --text-primary: #a9b7c6;
+            --text-secondary: #808080;
+            --border-color: #555555;
+            --success: #59a869;
+            --error: #ff4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .navbar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .navbar-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .navbar-back {
+            padding: 6px 16px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .navbar-back:hover {
+            background-color: var(--bg-tertiary);
+            border-color: var(--text-secondary);
+        }
+
+        /* 主内容区 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* 类选择器区域 */
+        .selector-section {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .selector-label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        /* 搜索下拉框容器 */
+        .search-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        /* 搜索输入框 */
+        .search-input {
+            width: 100%;
+            padding: 10px 14px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: border-color 0.15s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        /* 下拉列表容器 */
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .dropdown-list.show {
+            display: block;
+        }
+
+        /* 下拉选项 */
+        .dropdown-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .dropdown-item.selected {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        .dropdown-item.hidden {
+            display: none;
+        }
+
+        /* 无结果提示 */
+        .no-results {
+            padding: 12px 14px;
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        /* 类信息展示区 */
+        .class-info-section {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            min-height: 400px;
+        }
+
+        .class-info-header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .class-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 12px;
+        }
+
+        .class-meta {
+            display: flex;
+            gap: 24px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .class-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .class-meta-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* 字段列表 */
+        .fields-section {
+            margin-top: 24px;
+        }
+
+        .fields-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        /* 字段搜索框 */
+        .field-search-input {
+            width: 100%;
+            padding: 10px 14px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            transition: border-color 0.15s ease;
+        }
+
+        .field-search-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .field-search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .field-card {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+
+        .field-card:hover {
+            border-color: var(--accent-blue);
+            background-color: var(--bg-tertiary);
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .field-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .field-type {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-family: monospace;
+            background-color: var(--bg-secondary);
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        .field-default {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .field-default-value {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .field-notes {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .field-card.hidden {
+            display: none;
+        }
+
+        /* 字段无结果提示 */
+        .field-no-results {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .field-no-results.show {
+            display: block;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 0.95rem;
+        }
+
+        /* 加载状态 */
+        .loading-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 错误状态 */
+        .error-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--error);
+        }
+
+        /* 统计信息 */
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background-color: var(--bg-primary);
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .stat-item {
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            .class-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .navbar {
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <div class="navbar-logo">📖</div>
+            <div>
+                <div class="navbar-title">Mindustry IDE</div>
+            </div>
+        </div>
+        <button class="navbar-back" onclick="goBack()">← 返回主页</button>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="container">
+        <!-- 类选择器 -->
+        <div class="selector-section">
+            <label class="selector-label">选择类:</label>
+            <div class="search-dropdown">
+                <input 
+                    type="text" 
+                    id="classSearchInput" 
+                    class="search-input" 
+                    placeholder="输入类名搜索..."
+                    autocomplete="off"
+                >
+                <div id="classListDropdown" class="dropdown-list"></div>
+            </div>
+        </div>
+
+        <!-- 类信息展示 -->
+        <div class="class-info-section" id="classInfoSection">
+            <div class="empty-state">
+                <div class="empty-state-icon"></div>
+                <div class="empty-state-text">选择一个类来查看文档</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allClassNames = [];
+        let selectedClassName = '';
+
+        // 页面加载时获取类列表
+        window.addEventListener('DOMContentLoaded', () => {
+            loadClassList();
+            setupSearchDropdown();
+        });
+
+        // 设置搜索下拉框
+        function setupSearchDropdown() {
+            const searchInput = document.getElementById('classSearchInput');
+            const dropdown = document.getElementById('classListDropdown');
+
+            // 点击输入框显示/隐藏下拉列表
+            searchInput.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleDropdown();
+            });
+
+            // 输入时过滤
+            searchInput.addEventListener('input', (e) => {
+                filterClasses(e.target.value);
+            });
+
+            // 键盘导航
+            searchInput.addEventListener('keydown', (e) => {
+                handleKeyNavigation(e);
+            });
+
+            // 点击外部关闭下拉列表
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                    hideDropdown();
+                }
+            });
+        }
+
+        // 切换下拉列表显示状态
+        function toggleDropdown() {
+            const dropdown = document.getElementById('classListDropdown');
+            dropdown.classList.toggle('show');
+            if (dropdown.classList.contains('show')) {
+                filterClasses('');
+            }
+        }
+
+        // 显示下拉列表
+        function showDropdown() {
+            const dropdown = document.getElementById('classListDropdown');
+            dropdown.classList.add('show');
+        }
+
+        // 隐藏下拉列表
+        function hideDropdown() {
+            const dropdown = document.getElementById('classListDropdown');
+            dropdown.classList.remove('show');
+        }
+
+        // 过滤类名
+        function filterClasses(searchText) {
+            const dropdown = document.getElementById('classListDropdown');
+            const items = dropdown.querySelectorAll('.dropdown-item');
+            const lowerSearch = searchText.toLowerCase();
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const className = item.textContent.toLowerCase();
+                if (className.includes(lowerSearch)) {
+                    item.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+
+            // 显示/隐藏无结果提示
+            let noResults = dropdown.querySelector('.no-results');
+            if (visibleCount === 0) {
+                if (!noResults) {
+                    noResults = document.createElement('div');
+                    noResults.className = 'no-results';
+                    noResults.textContent = '未找到匹配的类';
+                    dropdown.appendChild(noResults);
+                }
+                noResults.style.display = 'block';
+            } else if (noResults) {
+                noResults.style.display = 'none';
+            }
+        }
+
+        // 键盘导航
+        function handleKeyNavigation(e) {
+            const dropdown = document.getElementById('classListDropdown');
+            const visibleItems = Array.from(dropdown.querySelectorAll('.dropdown-item:not(.hidden)'));
+            
+            if (visibleItems.length === 0) return;
+
+            const currentIndex = visibleItems.findIndex(item => item.classList.contains('selected'));
+
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (currentIndex < visibleItems.length - 1) {
+                        selectItem(visibleItems[currentIndex + 1], visibleItems);
+                    } else {
+                        selectItem(visibleItems[0], visibleItems);
+                    }
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (currentIndex > 0) {
+                        selectItem(visibleItems[currentIndex - 1], visibleItems);
+                    } else {
+                        selectItem(visibleItems[visibleItems.length - 1], visibleItems);
+                    }
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (currentIndex >= 0) {
+                        selectClass(visibleItems[currentIndex].textContent);
+                        hideDropdown();
+                    }
+                    break;
+                case 'Escape':
+                    hideDropdown();
+                    break;
+            }
+        }
+
+        // 选中某个选项
+        function selectItem(selectedItem, allItems) {
+            allItems.forEach(item => item.classList.remove('selected'));
+            selectedItem.classList.add('selected');
+            selectedItem.scrollIntoView({ block: 'nearest' });
+        }
+
+        // 加载类列表
+        function loadClassList() {
+            fetch('/api/dialog/class-list')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.classes) {
+                        allClassNames = data.classes;
+                        populateClassSelector(allClassNames);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载类列表失败:', error);
+                });
+        }
+
+        // 填充类选择器
+        function populateClassSelector(classNames) {
+            const dropdown = document.getElementById('classListDropdown');
+            dropdown.innerHTML = '';
+            
+            classNames.forEach(className => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.textContent = className;
+                item.onclick = () => {
+                    selectClass(className);
+                    hideDropdown();
+                };
+                dropdown.appendChild(item);
+            });
+        }
+
+        // 选择类
+        function selectClass(className) {
+            selectedClassName = className;
+            const searchInput = document.getElementById('classSearchInput');
+            searchInput.value = className;
+            loadClassInfo(className);
+        }
+
+        // 加载类信息
+        function loadClassInfo(className) {
+            if (!className) {
+                showEmptyState();
+                return;
+            }
+
+            showLoadingState();
+
+            fetch(`/api/dialog/class-info?className=${encodeURIComponent(className)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        displayClassInfo(data.data);
+                    } else {
+                        showErrorState(data.error || '加载失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('加载类信息失败:', error);
+                    showErrorState('网络错误: ' + error.message);
+                });
+        }
+
+        // 显示类信息
+        function displayClassInfo(info) {
+            const section = document.getElementById('classInfoSection');
+            
+            let html = `
+                <div class="class-info-header">
+                    <h1 class="class-name">${info.className}</h1>
+                    <div class="class-meta">
+                        <div class="class-meta-item">
+                            <span>父类:</span>
+                            <span class="class-meta-value">${info.parentType || '无'}</span>
+                        </div>
+                        <div class="class-meta-item">
+                            <span>字段数:</span>
+                            <span class="class-meta-value">${info.fieldCount}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (info.fields && info.fields.length > 0) {
+                html += `
+                    <div class="stats-bar">
+                        <div class="stat-item">
+                            显示 <span class="stat-value" id="visibleFieldCount">${info.fields.length}</span> / ${info.fields.length} 个字段
+                        </div>
+                    </div>
+                `;
+                
+                html += `<div class="fields-section">`;
+                html += `<h3 class="fields-title">字段列表:</h3>`;
+                
+                // 添加字段搜索框
+                html += `
+                    <input 
+                        type="text" 
+                        id="fieldSearchInput" 
+                        class="field-search-input" 
+                        placeholder="搜索字段名、类型或备注..."
+                        oninput="filterFields(this.value)"
+                    >
+                `;
+                
+                info.fields.forEach(field => {
+                    // 转义字段备注中的特殊字符
+                    const escapedNotes = (field.notes || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const escapedDefaultValue = (field.defaultValue || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    
+                    html += `
+                        <div class="field-card" 
+                             data-field-name="${field.name.toLowerCase()}" 
+                             data-field-type="${field.type.toLowerCase()}" 
+                             data-field-notes="${(field.notes || '').toLowerCase()}"
+                             onclick='showFieldDetail("${info.className}", "${field.name}", "${field.type}", "${escapedDefaultValue}", "${escapedNotes}")'>
+                            <div class="field-header">
+                                <span class="field-name">${field.name}</span>
+                                <span class="field-type">${field.type}</span>
+                            </div>
+                            <div class="field-default">
+                                默认值: <span class="field-default-value">${field.defaultValue}</span>
+                            </div>
+                            ${field.notes ? `<div class="field-notes">${field.notes}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                // 添加无结果提示
+                html += `
+                    <div id="fieldNoResults" class="field-no-results">
+                        未找到匹配的字段
+                    </div>
+                `;
+                
+                html += `</div>`;
+            } else {
+                html += `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-text">该类没有字段</div>
+                    </div>
+                `;
+            }
+
+            section.innerHTML = html;
+        }
+
+        // 显示空状态
+        function showEmptyState() {
+            const section = document.getElementById('classInfoSection');
+            section.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📚</div>
+                    <div class="empty-state-text">选择一个类来查看文档</div>
+                </div>
+            `;
+        }
+
+        // 显示加载状态
+        function showLoadingState() {
+            const section = document.getElementById('classInfoSection');
+            section.innerHTML = `
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <div>加载中...</div>
+                </div>
+            `;
+        }
+
+        // 显示错误状态
+        function showErrorState(message) {
+            const section = document.getElementById('classInfoSection');
+            section.innerHTML = `
+                <div class="error-state">
+                    <div style="font-size: 2rem; margin-bottom: 12px;">⚠️</div>
+                    <div>${message}</div>
+                </div>
+            `;
+        }
+
+        // 显示字段详情（复制到剪贴板）
+        function showFieldDetail(className, fieldName, fieldType, defaultValue, notes) {
+            // 构建完整的复制文本
+            let copyText = `${className}.${fieldName}`;
+            
+            if (defaultValue) {
+                copyText += `\n默认值: ${defaultValue}`;
+            }
+            
+            if (notes) {
+                copyText += `\n说明: ${notes}`;
+            }
+            
+            // 复制到剪贴板
+            navigator.clipboard.writeText(copyText).then(() => {
+                showToast(`已复制: ${className}.${fieldName}`);
+            }).catch(() => {
+                showToast(`${className}.${fieldName}`);
+            });
+        }
+
+        // 过滤字段
+        function filterFields(searchText) {
+            const fieldCards = document.querySelectorAll('.field-card');
+            const noResults = document.getElementById('fieldNoResults');
+            const visibleCountEl = document.getElementById('visibleFieldCount');
+            const lowerSearch = searchText.toLowerCase().trim();
+            let visibleCount = 0;
+
+            fieldCards.forEach(card => {
+                const fieldName = card.getAttribute('data-field-name') || '';
+                const fieldType = card.getAttribute('data-field-type') || '';
+                const fieldNotes = card.getAttribute('data-field-notes') || '';
+
+                // 搜索字段名、类型和备注
+                if (lowerSearch === '' || 
+                    fieldName.includes(lowerSearch) || 
+                    fieldType.includes(lowerSearch) || 
+                    fieldNotes.includes(lowerSearch)) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            // 更新统计信息
+            if (visibleCountEl) {
+                const totalCount = fieldCards.length;
+                visibleCountEl.textContent = visibleCount;
+            }
+
+            // 显示/隐藏无结果提示
+            if (noResults) {
+                if (visibleCount === 0 && lowerSearch !== '') {
+                    noResults.classList.add('show');
+                } else {
+                    noResults.classList.remove('show');
+                }
+            }
+        }
+
+        // 简单的提示消息
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                background-color: var(--bg-secondary);
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                padding: 12px 20px;
+                color: var(--text-primary);
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 0.85rem;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 2000);
+        }
+
+        // 返回主页
+        function goBack() {
+            window.location.href = '/';
+        }
+
+        // 添加动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
