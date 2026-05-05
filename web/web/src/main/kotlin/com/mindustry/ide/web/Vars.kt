@@ -32,46 +32,86 @@ object Vars {
      */
     fun loadBuiltinDocuments() {
         try {
-            val resourcePath = "/types"
-            val resourceStream = this.javaClass.getResourceAsStream(resourcePath)
+            val classLoader = this.javaClass.classLoader
+            val resourcePath = "types/"
             
-            if (resourceStream == null) {
+            println("正在加载内置文档...")
+            
+            // 使用 ClassLoader 获取资源 URL，然后列出所有文件
+            val resourceUrl = classLoader.getResource(resourcePath)
+            if (resourceUrl == null) {
                 println("⚠ 未找到内置文档资源: $resourcePath")
                 return
             }
             
-            // 获取 types 目录下的所有 JSON 文件
-            val uri = this.javaClass.getResource(resourcePath)?.toURI()
-            if (uri == null) {
-                println("⚠ 无法获取内置文档资源 URI")
-                return
-            }
+            var loadedCount = 0
+            var errorCount = 0
             
-            val typesDir = File(uri)
-            if (!typesDir.exists() || !typesDir.isDirectory) {
-                println("⚠ 内置文档目录不存在: ${typesDir.absolutePath}")
-                return
-            }
-            
-            val docFiles = typesDir.listFiles { file ->
-                file.isFile && file.extension == "json"
-            } ?: emptyArray()
-            
-            println("正在加载 ${docFiles.size} 个内置文档...")
-            
-            docFiles.forEach { file ->
-                try {
-                    val content = file.readText(charset("UTF-8"))
-                    parser.let {
-                        it.parseJsonToMeta(content)?.let { meta -> it.indexClassMeta(meta) }
+            // 尝试从 URL 中读取文件列表（适用于开发环境和某些 JAR 打包方式）
+            try {
+                val uri = resourceUrl.toURI()
+                val typesDir = java.io.File(uri)
+                
+                if (typesDir.exists() && typesDir.isDirectory) {
+                    val jsonFiles = typesDir.listFiles { file ->
+                        file.isFile && file.extension == "json"
+                    } ?: emptyArray()
+                    
+                    jsonFiles.forEach { file ->
+                        try {
+                            val content = file.readText(charset("UTF-8"))
+                            parser.let {
+                                it.parseJsonToMeta(content)?.let { meta -> it.indexClassMeta(meta) }
+                            }
+                            loadedCount++
+                        } catch (e: Exception) {
+                            errorCount++
+                            println("✗ 加载失败: ${file.name} - ${e.message}")
+                        }
                     }
-                    println("✓ 已加载内置文档: ${file.name}")
-                } catch (e: Exception) {
-                    println("✗ 加载内置文档失败: ${file.name} - ${e.message}")
+                }
+            } catch (e: Exception) {
+                // JAR 包中无法直接列出文件，使用备用方案
+                println("使用备用加载方案...")
+            }
+            
+            // 如果上面的方法失败（JAR 包中），使用配置文件中的类名列表
+            if (loadedCount == 0) {
+                println("使用备用加载方案...")
+                
+                // 从配置文件读取类名列表
+                val classListStream = classLoader.getResourceAsStream("builtin-classes.txt")
+                if (classListStream == null) {
+                    println("⚠ 未找到 builtin-classes.txt 配置文件")
+                    return
+                }
+                
+                val classNames = classListStream.bufferedReader().useLines { lines ->
+                    lines.map { it.trim() }
+                        .filter { it.isNotEmpty() && !it.startsWith("#") }
+                        .toList()
+                }
+                
+                println("从配置文件读取到 ${classNames.size} 个类名")
+                
+                classNames.forEach { className ->
+                    try {
+                        val fileName = "$className.json"
+                        val resourceStream = classLoader.getResourceAsStream("$resourcePath$fileName")
+                        if (resourceStream != null) {
+                            val content = resourceStream.bufferedReader(charset("UTF-8")).use { it.readText() }
+                            parser.let {
+                                it.parseJsonToMeta(content)?.let { meta -> it.indexClassMeta(meta) }
+                            }
+                            loadedCount++
+                        }
+                    } catch (e: Exception) {
+                        errorCount++
+                    }
                 }
             }
             
-            println("内置文档加载完成")
+            println("内置文档加载完成，共加载 $loadedCount 个文件${if (errorCount > 0) "，$errorCount 个失败" else ""}")
         } catch (e: Exception) {
             println("内置文档加载出错: ${e.message}")
             e.printStackTrace()
