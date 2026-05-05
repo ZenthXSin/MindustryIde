@@ -507,6 +507,147 @@
                 font-size: 0.65rem;
             }
         }
+
+        /* Toast 通知系统样式 */
+        .toast-container {
+            position: fixed;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            max-width: 420px;
+        }
+
+        .toast-container.top-right {
+            top: 20px;
+            right: 20px;
+        }
+
+        .toast-container.top-left {
+            top: 20px;
+            left: 20px;
+        }
+
+        .toast-container.bottom-right {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .toast-container.bottom-left {
+            bottom: 20px;
+            left: 20px;
+        }
+
+        .toast-dialog {
+            min-width: 280px;
+            max-width: 420px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            padding: 12px 16px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast-dialog.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast-dialog.hide {
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toast-icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+        }
+
+        .toast-text {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .toast-message {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 2px 4px;
+            margin: -2px;
+            width: 20px;
+            height: 20px;
+            line-height: 1;
+            flex-shrink: 0;
+            border-radius: 3px;
+            transition: color 0.15s ease,
+                        background-color 0.15s ease;
+        }
+
+        .toast-close:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .toast-success .toast-icon {
+            background-color: #59a869;
+        }
+
+        .toast-error .toast-icon {
+            background-color: #ff4444;
+        }
+
+        .toast-warning .toast-icon {
+            background-color: #ffa500;
+        }
+
+        .toast-info .toast-icon {
+            background-color: #3574f0;
+        }
     </style>
 </head>
 <body>
@@ -520,7 +661,7 @@
     </div>
     <div class="navbar-actions">
         <button type="button" class="navbar-btn" onclick="goBack()">← 返回</button>
-        <button type="button" class="navbar-btn primary" onclick="exportProject()">导出</button>
+        <button type="button" class="navbar-btn primary" onclick="exportProjectToClipboard()">导出</button>
     </div>
 </nav>
 
@@ -531,13 +672,18 @@
 
     <!-- 左侧边栏 -->
     <aside class="sidebar" id="sidebar">
-        <button type="button" class="sidebar-expand-btn" id="sidebarToggleBtn" aria-label="收起侧边栏" title="展开/收起侧边栏" onclick="toggleSidebar()">&lt;
-        </button>
+        <button type="button" class="sidebar-expand-btn" id="sidebarToggleBtn" aria-label="收起侧边栏" title="展开/收起侧边栏" onclick="toggleSidebar()">&lt;</button>
         <div class="sidebar-header">
             <span class="sidebar-title">字段选择</span>
         </div>
-        <div class="sidebar-content">
-            <p style="color: var(--text-secondary); font-size: 0.85rem;">这里是字段选择区域（占位符）</p>
+        <div class="sidebar-content" id="sidebarContent">
+            <!-- 搜索框 -->
+            <input type="text" id="fieldSearch" placeholder="搜索字段..."
+                   style="width: 100%; padding: 8px; margin-bottom: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-family: 'JetBrains Mono'; border-radius: 4px;">
+            <!-- 字段列表 -->
+            <div id="fieldList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+            <!-- 刷新按钮 -->
+            <button onclick="refreshFields()" style="width: 100%; margin-top: 12px; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; border-radius: 4px;">🔄 刷新</button>
         </div>
     </aside>
 
@@ -572,12 +718,426 @@
     </div>
 </div>
 
+<!-- Toast 通知容器 -->
+<div class="toast-container top-right" id="toastContainerTopRight"></div>
+<div class="toast-container top-left" id="toastContainerTopLeft"></div>
+<div class="toast-container bottom-right" id="toastContainerBottomRight"></div>
+<div class="toast-container bottom-left" id="toastContainerBottomLeft"></div>
+
 <script>
     (function() {
         // ============ URL 参数 & 项目名称 ============
         const urlParams = new URLSearchParams(window.location.search);
         const projectName = urlParams.get('project') || '未命名项目';
         document.getElementById('projectName').textContent = projectName;
+
+        // ============ 字段数据 ============
+        let allFields = [];
+        let addedFields = [];
+        let selectedFieldForEdit = null;
+
+        // ============ 获取项目字段 ============
+        async function fetchFields() {
+            try {
+                const res = await fetch(`/api/dialog/project/${encodeURIComponent(projectName)}/fields`);
+                const data = await res.json();
+                if (data.success) {
+                    allFields = data.allFields || [];
+                    addedFields = data.addedFields || [];
+                    renderFieldList();
+                    renderCanvasCards();
+                } else {
+                    showToast({ title: '错误', message: data.error || '获取字段失败', type: 'ERROR', autoClose: 3000 });
+                }
+            } catch (err) {
+                showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
+            }
+        }
+
+        // 刷新字段的包装函数
+        window.refreshFields = function() {
+            fetchFields();
+            showToast({ title: '提示', message: '正在刷新字段...', type: 'INFO', autoClose: 1000 });
+        };
+
+        // ============ 渲染侧边栏字段列表 ============
+        function renderFieldList() {
+            const container = document.getElementById('fieldList');
+            const searchTerm = document.getElementById('fieldSearch').value.toLowerCase();
+            let html = '';
+            
+            const addedNames = new Set(addedFields.map(f => f.name));
+            
+            allFields.forEach(field => {
+                if (searchTerm && !field.name.toLowerCase().includes(searchTerm)) return;
+                
+                const isAdded = addedNames.has(field.name);
+                const addedField = isAdded ? addedFields.find(f => f.name === field.name) : null;
+                const isComplex = !['String','Boolean','Int','Float','Double','Long','Short','Byte','Char'].includes(field.type);
+                
+                html += `
+                    <div style="padding: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${field.name}</span>
+                                    <span style="font-size: 0.7rem; color: var(--text-secondary); background: var(--bg-secondary); padding: 1px 6px; border-radius: 3px;">${field.type}</span>
+                                    ${field.isRequired ? '<span style="color: orange; font-weight: bold;">*</span>' : ''}
+                                    ${isComplex && isAdded ? '<span onclick="tryExpandSubfields(\''+field.name+'\')" style="color: var(--accent-blue); cursor: pointer; font-size: 0.8rem;"></span>' : ''}
+                                </div>
+                                ${isAdded ? `<div style="font-size: 0.8rem; color: var(--success); margin-top: 4px;">值: ${escapeHtml(addedField.value)}</div>` : ''}
+                            </div>
+                            <div style="display: flex; gap: 4px; align-items: center;">
+                                ${isAdded ? `
+                                    <button onclick="editFieldValue('${field.name}', '${escapeHtml(addedField.value)}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--accent-blue); border: none; color: white; border-radius: 3px; cursor: pointer;"></button>
+                                    <button onclick="deleteField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--error); border: none; color: white; border-radius: 3px; cursor: pointer;"></button>
+                                ` : `
+                                    <button onclick="addField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--success); border: none; color: white; border-radius: 3px; cursor: pointer;">+</button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html || '<div style="color: var(--text-secondary); text-align: center; padding: 16px;">无匹配字段</div>';
+        }
+
+        // ============ 操作函数 ============
+        async function addField(fieldName) {
+            try {
+                const res = await fetch(`/api/dialog/project/${encodeURIComponent(projectName)}/field`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fieldName })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
+                    fetchFields();
+                } else {
+                    showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
+                }
+            } catch (err) {
+                showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
+            }
+        }
+
+        function editFieldValue(fieldName, currentValue) {
+            const newValue = prompt(`修改 ${fieldName} 的值:`, currentValue);
+            if (newValue !== null && newValue !== currentValue) {
+                updateFieldValue(fieldName, newValue);
+            }
+        }
+
+        async function updateFieldValue(fieldName, value) {
+            try {
+                const res = await fetch(`/api/dialog/project/${encodeURIComponent(projectName)}/field`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fieldName, value: value })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
+                    fetchFields();
+                } else {
+                    showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
+                }
+            } catch (err) {
+                showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
+            }
+        }
+
+        async function deleteField(fieldName) {
+            if (!confirm(`确定删除字段 ${fieldName}？`)) return;
+            try {
+                const res = await fetch(`/api/dialog/project/${encodeURIComponent(projectName)}/field`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fieldName })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
+                    fetchFields();
+                } else {
+                    showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
+                }
+            } catch (err) {
+                showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
+            }
+        }
+
+        function tryExpandSubfields(fieldName) {
+            showToast({ title: '提示', message: `暂不支持编辑 ${fieldName} 的子字段`, type: 'INFO', autoClose: 2000 });
+        }
+
+        // ============ 画布卡片渲染 ============
+        let cardPositions = new Map(); // 存储每个字段的自定义位置
+        
+        // 解析字段值，提取实际显示的字符串
+        function parseFieldValue(value, fieldType) {
+            if (!value || value === 'null' || value === '') return '';
+            
+            try {
+                // 尝试解析 JSON
+                const parsed = JSON.parse(value);
+                
+                // 如果是 String 类型，直接返回 value 字段的值
+                if (fieldType === 'String' && typeof parsed === 'object' && parsed.value !== undefined) {
+                    return parsed.value;
+                }
+                
+                // 如果是基本类型，尝试提取
+                if (typeof parsed === 'object' && parsed.value !== undefined) {
+                    return String(parsed.value);
+                }
+                
+                // 如果是对象，返回简化的表示
+                if (typeof parsed === 'object') {
+                    return JSON.stringify(parsed).substring(0, 50) + (JSON.stringify(parsed).length > 50 ? '...' : '');
+                }
+                
+                return String(parsed);
+            } catch (e) {
+                // 如果不是 JSON，直接返回原值
+                return value;
+            }
+        }
+        
+        function getCanvasCardPosition(index) {
+            const cardHeight = 50;
+            const gap = 8;
+            return { x: 0, y: index * (cardHeight + gap) };
+        }
+
+        function renderCanvasCards() {
+            // 清除旧的卡片
+            const oldCards = document.querySelectorAll('.field-card-canvas');
+            oldCards.forEach(card => card.remove());
+            
+            const container = document.getElementById('canvasContent');
+            
+            addedFields.forEach((field, index) => {
+                // 检查是否有自定义位置
+                let pos;
+                if (cardPositions.has(field.name)) {
+                    pos = cardPositions.get(field.name);
+                } else {
+                    pos = getCanvasCardPosition(index);
+                    cardPositions.set(field.name, pos);
+                }
+                
+                const isComplex = !['String','Boolean','Int','Float','Double','Long','Short','Byte','Char'].includes(field.type);
+                
+                const cardEl = document.createElement('div');
+                cardEl.className = 'field-card-canvas';
+                cardEl.style.cssText = `
+                    position: absolute; 
+                    left: ${CANVAS_CENTER + pos.x}px; 
+                    top: ${CANVAS_CENTER + pos.y}px; 
+                    background: var(--bg-secondary); 
+                    border: 1px solid var(--accent-blue); 
+                    border-radius: 6px; 
+                    padding: 8px 12px; 
+                    min-width: 200px; 
+                    max-width: 300px;
+                    cursor: grab; 
+                    user-select: none; 
+                    font-size: 0.8rem;
+                    z-index: 5;
+                `;
+                
+                // 解析实际显示的值
+                const displayValue = parseFieldValue(field.value, field.type);
+                
+                cardEl.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-weight: 600; color: var(--accent-blue);">${field.name}</span>
+                            <span style="color: var(--text-secondary); margin-left: 8px; font-size: 0.7rem;">${field.type}</span>
+                        </div>
+                        <button onclick="event.stopPropagation(); deleteField('${field.name}')" 
+                            style="background: transparent; border: none; color: var(--error); cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 0 4px;" 
+                            title="删除字段">&times;</button>
+                    </div>
+                    <div style="color: var(--success); margin-top: 4px; cursor: text; word-break: break-all;" onclick="event.stopPropagation(); editFieldValue('${field.name}', '${escapeHtml(displayValue)}')" title="${escapeHtml(field.value)}">${escapeHtml(displayValue)}</div>
+                    ${isComplex ? '<div style="color: var(--text-secondary); font-size: 0.65rem; margin-top: 2px;">可展开子字段 (暂不支持)</div>' : ''}
+                `;
+                
+                // 添加拖拽功能
+                addDragFunctionality(cardEl, field.name);
+                
+                container.appendChild(cardEl);
+            });
+        }
+        
+        // 为卡片添加拖拽功能
+        function addDragFunctionality(cardEl, fieldName) {
+            let isDragging = false;
+            let startX, startY;
+            let initialLeft, initialTop;
+            
+            cardEl.addEventListener('mousedown', (e) => {
+                // 如果点击的是删除按钮或值编辑区域，不启动拖拽
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                if (e.target.style.cursor === 'text') return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                const rect = cardEl.getBoundingClientRect();
+                const canvasRect = document.getElementById('editorArea').getBoundingClientRect();
+                
+                initialLeft = parseFloat(cardEl.style.left);
+                initialTop = parseFloat(cardEl.style.top);
+                
+                cardEl.style.cursor = 'grabbing';
+                cardEl.style.zIndex = '10';
+            });
+            
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const dx = (e.clientX - startX) / currentScale;
+                const dy = (e.clientY - startY) / currentScale;
+                
+                const newLeft = initialLeft + dx;
+                const newTop = initialTop + dy;
+                
+                cardEl.style.left = newLeft + 'px';
+                cardEl.style.top = newTop + 'px';
+            });
+            
+            window.addEventListener('mouseup', (e) => {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                cardEl.style.cursor = 'grab';
+                cardEl.style.zIndex = '5';
+                
+                // 保存新位置
+                const newLeft = parseFloat(cardEl.style.left);
+                const newTop = parseFloat(cardEl.style.top);
+                cardPositions.set(fieldName, {
+                    x: newLeft - CANVAS_CENTER,
+                    y: newTop - CANVAS_CENTER
+                });
+            });
+        }
+        
+        // 重置所有卡片位置
+        window.resetCardPositions = function() {
+            cardPositions.clear();
+            renderCanvasCards();
+            showToast({ title: '提示', message: '卡片位置已重置', type: 'INFO', autoClose: 1500 });
+        };
+
+        // ============ 导出到剪贴板 ============
+        async function exportProjectToClipboard() {
+            try {
+                const res = await fetch(`/api/dialog/project-content?projectName=${encodeURIComponent(projectName)}`);
+                const data = await res.json();
+                if (data.success) {
+                    await navigator.clipboard.writeText(data.content);
+                    showToast({ title: '成功', message: 'JSON 已复制到剪贴板', type: 'SUCCESS', autoClose: 2000 });
+                } else {
+                    throw new Error(data.error || '未知错误');
+                }
+            } catch (err) {
+                showToast({ title: '错误', message: '导出失败: ' + err.message, type: 'ERROR', autoClose: 3000 });
+            }
+        }
+
+        // ============ Toast 通知系统（从 index.html 移植） ============
+        let toastIdCounter = 0;
+        let baseZIndex = 10000;
+        const activeToasts = new Map();
+
+        function showToast(toastData) {
+            const position = toastData.position || 'TOP_RIGHT';
+            let containerId;
+            switch(position) {
+                case 'TOP_LEFT': containerId = 'toastContainerTopLeft'; break;
+                case 'BOTTOM_RIGHT': containerId = 'toastContainerBottomRight'; break;
+                case 'BOTTOM_LEFT': containerId = 'toastContainerBottomLeft'; break;
+                default: containerId = 'toastContainerTopRight'; break;
+            }
+            
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const toastId = 'toast-' + (++toastIdCounter);
+            const toastEl = document.createElement('div');
+            toastEl.id = toastId;
+            toastEl.className = `toast-dialog toast-${toastData.type.toLowerCase()}`;
+            
+            toastEl.innerHTML = `
+                <div class="toast-content">
+                    <div class="toast-icon"></div>
+                    <div class="toast-text">
+                        <div class="toast-title">${toastData.title}</div>
+                        <div class="toast-message">${toastData.message}</div>
+                    </div>
+                    ${toastData.closable !== false ? `<button class="toast-close" onclick="closeToast('${toastId}')">&times;</button>` : ''}
+                </div>
+            `;
+            
+            container.prepend(toastEl);
+            baseZIndex++;
+            toastEl.style.zIndex = baseZIndex.toString();
+            
+            requestAnimationFrame(() => {
+                toastEl.classList.add('show');
+            });
+            
+            const lifecycle = {
+                element: toastEl,
+                timerId: null,
+                isClosing: false
+            };
+            
+            if (toastData.autoClose > 0) {
+                lifecycle.timerId = setTimeout(() => closeToast(toastId), toastData.autoClose);
+                toastEl.addEventListener('mouseenter', () => {
+                    if (lifecycle.timerId) {
+                        clearTimeout(lifecycle.timerId);
+                        lifecycle.timerId = null;
+                    }
+                });
+                toastEl.addEventListener('mouseleave', () => {
+                    if (!lifecycle.isClosing && !lifecycle.timerId) {
+                        lifecycle.timerId = setTimeout(() => closeToast(toastId), toastData.autoClose);
+                    }
+                });
+            }
+            
+            activeToasts.set(toastId, lifecycle);
+        }
+
+        function closeToast(toastId) {
+            const lifecycle = activeToasts.get(toastId);
+            if (!lifecycle || lifecycle.isClosing) return;
+            lifecycle.isClosing = true;
+            if (lifecycle.timerId) clearTimeout(lifecycle.timerId);
+            
+            const toastEl = lifecycle.element;
+            toastEl.classList.add('hide');
+            setTimeout(() => {
+                if (toastEl.parentNode) toastEl.parentNode.removeChild(toastEl);
+                activeToasts.delete(toastId);
+            }, 300);
+        }
+
+        // 辅助函数
+        function escapeHtml(unsafe) {
+            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
 
         // ============ DOM 元素引用 ============
         const sidebar = document.getElementById('sidebar');
@@ -1100,7 +1660,74 @@
             updateSidebarUI();
             initCanvasView();
             console.log('画布已初始化，支持拖拽平移和滚轮缩放');
+            
+            // 初始化字段搜索
+            const searchInput = document.getElementById('fieldSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', () => {
+                    renderFieldList();
+                });
+            }
+            
+            // 初始加载字段数据
+            fetchFields();
+            
+            // 启动轮询检查后端通知
+            startDialogPolling();
         });
+        
+        // ============ 轮询检查后端通知 ============
+        function startDialogPolling() {
+            setInterval(() => {
+                checkForDialogs();
+            }, 300); // 每 300ms 检查一次
+        }
+        
+        function checkForDialogs() {
+            fetch('/api/dialog/next')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.dialog) {
+                        const dialog = data.dialog;
+                        // 根据 position 决定显示方式
+                        if (dialog.position === 'CENTER') {
+                            // 居中对话框（暂不支持，只显示 Toast）
+                            showToast({
+                                title: dialog.title,
+                                message: dialog.message,
+                                type: dialog.type,
+                                autoClose: dialog.autoClose || 3000
+                            });
+                        } else {
+                            // Toast 通知
+                            showToast({
+                                title: dialog.title,
+                                message: dialog.message,
+                                type: dialog.type,
+                                position: dialog.position,
+                                autoClose: dialog.autoClose || 3000
+                            });
+                        }
+                    }
+                })
+                .catch(error => {
+                    // 静默失败，不影响用户体验
+                    console.debug('轮询检查通知失败:', error);
+                });
+        }
+
+        window.exportProjectToClipboard = exportProjectToClipboard;
+        window.fetchFields = fetchFields;
+        window.renderFieldList = renderFieldList;
+        window.renderCanvasCards = renderCanvasCards;
+        window.resetCardPositions = resetCardPositions;
+        window.addField = addField;
+        window.editFieldValue = editFieldValue;
+        window.updateFieldValue = updateFieldValue;
+        window.deleteField = deleteField;
+        window.tryExpandSubfields = tryExpandSubfields;
+        window.showToast = showToast;
+        window.closeToast = closeToast;
 
         // ============ 暴露API到全局 ============
         window.editorAPI = {

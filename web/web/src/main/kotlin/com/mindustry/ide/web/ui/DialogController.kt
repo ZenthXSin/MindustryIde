@@ -1,5 +1,6 @@
 package com.mindustry.ide.web.ui
 
+import com.mindustry.ide.web.project.ProjectManager
 import org.springframework.web.bind.annotation.*
 
 /**
@@ -230,7 +231,7 @@ class DialogController {
         val projectName = request["projectName"] ?: ""
         val className = request["className"] ?: ""
         
-        return com.mindustry.ide.web.project.ProjectManager.createProject(projectName, className)
+        return ProjectManager.createProject(projectName, className)
     }
     
     /**
@@ -238,7 +239,7 @@ class DialogController {
      */
     @GetMapping("/project-content")
     fun getProjectContent(@RequestParam projectName: String): Map<String, Any?> {
-        return com.mindustry.ide.web.project.ProjectManager.getProjectContent(projectName)
+        return ProjectManager.getProjectContent(projectName)
     }
     
     /**
@@ -246,7 +247,7 @@ class DialogController {
      */
     @GetMapping("/project-list")
     fun getProjectList(): Map<String, Any?> {
-        val projects = com.mindustry.ide.web.project.ProjectManager.getProjectList()
+        val projects = ProjectManager.getProjectList()
         return mapOf(
             "success" to true,
             "projects" to projects,
@@ -260,7 +261,7 @@ class DialogController {
     @PostMapping("/delete-project")
     fun deleteProject(@RequestBody request: Map<String, String>): Map<String, Any?> {
         val projectName = request["projectName"] ?: ""
-        return com.mindustry.ide.web.project.ProjectManager.deleteProject(projectName)
+        return ProjectManager.deleteProject(projectName)
     }
     
     /**
@@ -270,6 +271,44 @@ class DialogController {
     fun renameProject(@RequestBody request: Map<String, String>): Map<String, Any?> {
         val oldName = request["oldName"] ?: ""
         val newName = request["newName"] ?: ""
-        return com.mindustry.ide.web.project.ProjectManager.renameProject(oldName, newName)
+        return ProjectManager.renameProject(oldName, newName)
+    }
+
+    // 在 DialogController 类中添加以下方法
+
+    /**
+     * 获取项目字段信息
+     */
+    @GetMapping("/project/{projectName}/fields")
+    fun getProjectFields(@PathVariable projectName: String): Map<String, Any?> {
+        return ProjectManager.getProjectFields(projectName)
+    }
+
+    /**
+     * 添加字段
+     */
+    @PostMapping("/project/{projectName}/field")
+    fun addField(@PathVariable projectName: String, @RequestBody request: Map<String, String>): Map<String, Any?> {
+        val fieldName = request["fieldName"] ?: return mapOf("success" to false, "error" to "缺少 fieldName")
+        return ProjectManager.addField(projectName, fieldName)
+    }
+
+    /**
+     * 修改字段值
+     */
+    @PutMapping("/project/{projectName}/field")
+    fun updateField(@PathVariable projectName: String, @RequestBody request: Map<String, String>): Map<String, Any?> {
+        val fieldName = request["fieldName"] ?: return mapOf("success" to false, "error" to "缺少 fieldName")
+        val value = request["value"] ?: return mapOf("success" to false, "error" to "缺少 value")
+        return ProjectManager.updateFieldValue(projectName, fieldName, value)
+    }
+
+    /**
+     * 删除字段
+     */
+    @DeleteMapping("/project/{projectName}/field")
+    fun deleteField(@PathVariable projectName: String, @RequestBody request: Map<String, String>): Map<String, Any?> {
+        val fieldName = request["fieldName"] ?: return mapOf("success" to false, "error" to "缺少 fieldName")
+        return ProjectManager.removeField(projectName, fieldName)
     }
 }

@@ -135,6 +135,10 @@ class ClassBuild(
         return json.encodeToString(getMeta())
     }
 
+    fun removeFieldBuild(fieldName: String): Boolean {
+        return fieldBuilds.removeIf { it.field.name == fieldName }
+    }
+
     fun toJson(): String {
         if (value != "null") return if (value.isBooleanString()) {
             value

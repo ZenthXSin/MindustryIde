@@ -54,10 +54,12 @@ class ExampleUnitTest {
                 first { it.field.name == "amount" }
             }) { apply { value.value = "5" } }
         } }
+
         println("为JsonWorkFile添加接口")
         tool.addFieldBuild({
             first { it.field.name == "drawer" }
         })
+
         println("修改接口")
         tool.setFieldBuild("drawer") { apply {
             value.typeValue = tool.getClassBuildByName("DrawRegion")
