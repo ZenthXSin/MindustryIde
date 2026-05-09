@@ -1,4 +1,7 @@
-一个Midnustry mod 编辑器
+# 一个Midnustry mod 编辑器
+
+## [点我查看使用方法](readme/HowToUse)
+
 
 待办：
 框架规划

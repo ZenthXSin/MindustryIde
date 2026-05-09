@@ -345,19 +345,6 @@
             margin-top: 6px;
         }
 
-        /* 卡片动画相关 */
-        .field-card-canvas {
-            transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-            top 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-            opacity 0.2s ease,
-            transform 0.2s ease;
-            will-change: left, top;
-        }
-
-        .field-card-canvas.no-transition {
-            transition: none !important;
-        }
-
         .zoom-controls {
             position: absolute;
             bottom: 20px;
@@ -709,53 +696,12 @@
         const urlParams = new URLSearchParams(window.location.search);
         const projectName = urlParams.get('project') || '未命名项目';
         const fieldPath = urlParams.get('path') || '';  // 嵌套路径，空表示顶层
-
+        
         document.getElementById('projectName').textContent = projectName;
 
         let allFields = [];
         let addedFields = [];
         let currentClassName = '';  // 当前类名
-        
-        // 自动刷新机制
-        let autoRefreshTimer = null;
-        let lastActivityTime = 0;
-        const AUTO_REFRESH_INTERVAL = 3000; // 3秒
-        
-        /**
-         * 启动自动刷新定时器
-         */
-        function startAutoRefresh() {
-            if (autoRefreshTimer) return; // 已经启动
-            
-            autoRefreshTimer = setInterval(() => {
-                const now = Date.now();
-                // 如果距离上次操作超过3秒，则刷新
-                if (now - lastActivityTime >= AUTO_REFRESH_INTERVAL) {
-                    fetchFields();
-                }
-            }, AUTO_REFRESH_INTERVAL);
-        }
-        
-        /**
-         * 停止自动刷新定时器
-         */
-        function stopAutoRefresh() {
-            if (autoRefreshTimer) {
-                clearInterval(autoRefreshTimer);
-                autoRefreshTimer = null;
-            }
-        }
-        
-        /**
-         * 记录用户活动，重置计时器
-         */
-        function recordActivity() {
-            lastActivityTime = Date.now();
-            // 如果定时器未启动，则启动
-            if (!autoRefreshTimer) {
-                startAutoRefresh();
-            }
-        }
 
         async function fetchFields() {
             try {
@@ -767,7 +713,7 @@
                     // 项目模式：获取顶层字段
                     url = `/api/dialog/project/${encodeURIComponent(projectName)}/fields`;
                 }
-
+                
                 const res = await fetch(url);
                 const data = await res.json();
                 if (data.success) {
@@ -793,7 +739,7 @@
         // 渲染面包屑导航
         function renderBreadcrumb() {
             const navbarProject = document.getElementById('projectName');
-
+            
             if (!fieldPath) {
                 // 项目模式：只显示项目名
                 navbarProject.textContent = projectName;
@@ -801,7 +747,7 @@
                 // 子类模式：显示路径
                 const parts = fieldPath.split('.');
                 let html = `<a href="?project=${encodeURIComponent(projectName)}" style="color: var(--text-primary); text-decoration: none;">${projectName}</a>`;
-
+                
                 let currentPath = '';
                 parts.forEach((part, index) => {
                     currentPath += (index > 0 ? '.' : '') + part;
@@ -813,7 +759,7 @@
                         html += ` > <a href="?project=${encodeURIComponent(projectName)}&path=${encodeURIComponent(currentPath)}" style="color: var(--accent-blue); text-decoration: none; cursor: pointer;">${part}</a>`;
                     }
                 });
-
+                
                 navbarProject.innerHTML = html;
             }
         }
@@ -826,13 +772,13 @@
             const currentParams = new URLSearchParams(window.location.search);
             const currentProject = currentParams.get('project') || '未命名项目';
             const currentFieldPath = currentParams.get('path') || '';
-
+            
             if (!currentFieldPath) {
                 // 没有路径，已经在顶层，返回首页
                 window.location.href = '/';
                 return;
             }
-
+            
             const parts = currentFieldPath.split('.');
             if (parts.length === 1) {
                 // 只有一层路径，返回项目主页
@@ -887,10 +833,9 @@
         }
 
         window.addField = async function(fieldName) {
-            recordActivity(); // 记录活动
             try {
                 let url, body;
-
+                
                 if (fieldPath) {
                     // 子类模式
                     url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-child`;
@@ -900,7 +845,7 @@
                     url = `/api/dialog/project/${encodeURIComponent(projectName)}/field`;
                     body = JSON.stringify({ fieldName });
                 }
-
+                
                 const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -919,7 +864,6 @@
         };
 
         window.updateFieldValue = async function(fieldName, value) {
-            recordActivity(); // 记录活动
             const currentField = addedFields.find(f => f.name === fieldName);
             if (!currentField) return;
 
@@ -928,7 +872,7 @@
 
             try {
                 let url, body;
-
+                
                 if (fieldPath) {
                     // 子类模式
                     url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-child`;
@@ -938,7 +882,7 @@
                     url = `/api/dialog/project/${encodeURIComponent(projectName)}/field`;
                     body = JSON.stringify({ fieldName, value });
                 }
-
+                
                 const res = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -960,10 +904,9 @@
 
         window.deleteField = async function(fieldName) {
             if (!confirm(`确定删除字段 ${fieldName}？`)) return;
-            recordActivity(); // 记录活动
             try {
                 let url, body;
-
+                
                 if (fieldPath) {
                     // 子类模式
                     url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-child`;
@@ -973,7 +916,7 @@
                     url = `/api/dialog/project/${encodeURIComponent(projectName)}/field`;
                     body = JSON.stringify({ fieldName });
                 }
-
+                
                 const res = await fetch(url, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
@@ -1004,25 +947,28 @@
             }
         }
 
-        // ==================== 自动布局与动画系统 ====================
-        let cardPositions = new Map();        // 存储每个字段的目标偏移 {x, y}（相对于 CANVAS_CENTER）
-        let manuallyPositioned = new Set();  // 记录是否被用户手动拖动过
+        // 自动布局系统
+        let cardPositions = new Map();
+        let manuallyPositioned = new Set();
 
         /**
-         * 智能自动布局算法 —— 参考蓝图节点层次化思想，为无连线节点寻找最佳网格位置
-         * 优先采用紧凑的流式网格，避免重叠，并尽量保持与原有位置接近（减少移动距离）
+         * 力导向布局算法 - 为新节点找到最佳位置
+         * @param {string} fieldName - 新字段名称
+         * @param {number} totalCards - 当前卡片总数
+         * @returns {{x: number, y: number}} - 推荐的坐标位置
          */
         function calculateAutoLayoutPosition(fieldName, totalCards) {
             const cardWidth = 260;
             const cardHeight = 80;
-            const spacingX = 30;
-            const spacingY = 25;
-
+            const spacingX = 30;  // 水平间距
+            const spacingY = 25;  // 垂直间距
+            
+            // 如果没有其他卡片，放在中心
             if (totalCards === 0) {
                 return { x: 0, y: 0 };
             }
 
-            // 收集其他卡片的位置
+            // 收集所有现有卡片的位置和尺寸
             const existingNodes = [];
             cardPositions.forEach((pos, name) => {
                 if (name !== fieldName) {
@@ -1035,15 +981,54 @@
                 }
             });
 
-            // 生成候选位置（基于现有节点四周扩展 + 原点环状扩展）
+            // 策略1：尝试在右侧或下方找到空隙
+            const candidatePositions = generateCandidatePositions(existingNodes, cardWidth, cardHeight, spacingX, spacingY);
+            
+            // 评估每个候选位置的得分（考虑重叠、距离等）
+            let bestPosition = null;
+            let bestScore = Infinity;
+
+            for (const candidate of candidatePositions) {
+                const score = evaluatePosition(candidate, existingNodes, cardWidth, cardHeight);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestPosition = candidate;
+                }
+            }
+
+            // 如果找到了合适的位置，返回它
+            if (bestPosition) {
+                return bestPosition;
+            }
+
+            // 策略2：网格扩展（后备方案）
+            return fallbackGridLayout(totalCards, cardWidth, cardHeight, spacingX, spacingY);
+        }
+
+        /**
+         * 生成候选位置列表
+         */
+        function generateCandidatePositions(nodes, cardWidth, cardHeight, spacingX, spacingY) {
             const candidates = [];
-            existingNodes.forEach(node => {
+            const margin = 50; // 边界留白
+
+            // 在每个现有节点的四周生成候选位置
+            nodes.forEach(node => {
+                // 右侧
                 candidates.push({ x: node.x + node.width + spacingX, y: node.y });
+                // 左侧
                 candidates.push({ x: node.x - cardWidth - spacingX, y: node.y });
+                // 下方
                 candidates.push({ x: node.x, y: node.y + node.height + spacingY });
+                // 上方
                 candidates.push({ x: node.x, y: node.y - cardHeight - spacingY });
+                // 右下角
+                candidates.push({ x: node.x + node.width + spacingX, y: node.y + node.height + spacingY });
+                // 左下角
+                candidates.push({ x: node.x - cardWidth - spacingX, y: node.y + node.height + spacingY });
             });
 
+            // 添加从原点向外扩展的环形位置
             const rings = 3;
             for (let ring = 1; ring <= rings; ring++) {
                 const radius = ring * (cardWidth + spacingX);
@@ -1057,40 +1042,56 @@
                 }
             }
 
-            // 评估每个候选位置：重叠严重惩罚，距离中心适度偏好
-            let bestPos = null;
-            let bestScore = Infinity;
-            const minDistance = 20;
+            return candidates;
+        }
 
-            for (const cand of candidates) {
-                let score = 0;
-                for (const node of existingNodes) {
-                    const dx = Math.abs(cand.x - node.x);
-                    const dy = Math.abs(cand.y - node.y);
-                    if (dx < (cardWidth + minDistance) && dy < (cardHeight + minDistance)) {
-                        score += 10000; // 重叠直接淘汰
-                    }
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist > 0) score += 1000 / dist;
+        /**
+         * 评估位置的得分（越低越好）
+         */
+        function evaluatePosition(candidate, nodes, cardWidth, cardHeight) {
+            let score = 0;
+            const minDistance = 20; // 最小允许距离
+
+            // 检查与所有现有节点的重叠和距离
+            nodes.forEach(node => {
+                const dx = Math.abs(candidate.x - node.x);
+                const dy = Math.abs(candidate.y - node.y);
+                
+                // 计算实际距离
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // 如果重叠，给予极高惩罚
+                if (dx < (cardWidth + minDistance) && dy < (cardHeight + minDistance)) {
+                    score += 10000;
                 }
-                const distFromCenter = Math.sqrt(cand.x * cand.x + cand.y * cand.y);
-                score += distFromCenter * 0.08;
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestPos = cand;
+                
+                // 距离越近，惩罚越大（反比关系）
+                if (distance > 0) {
+                    score += 1000 / distance;
                 }
-            }
+            });
 
-            if (bestPos) return bestPos;
+            // 偏好靠近中心的区域（避免过于分散）
+            const distanceFromCenter = Math.sqrt(candidate.x * candidate.x + candidate.y * candidate.y);
+            score += distanceFromCenter * 0.1;
 
-            // 后备网格布局
-            const cols = Math.max(1, Math.floor(Math.sqrt(totalCards + 1) * 1.3));
-            const idx = totalCards;
-            const row = Math.floor(idx / cols);
-            const col = idx % cols;
+            return score;
+        }
+
+        /**
+         * 后备的网格布局算法
+         */
+        function fallbackGridLayout(totalCards, cardWidth, cardHeight, spacingX, spacingY) {
+            const maxCols = Math.floor(Math.min(5, Math.sqrt(totalCards + 1) * 1.3));
+            const cols = Math.max(1, maxCols);
+            const index = totalCards; // 新卡片的索引
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            
             const gridWidth = cols * (cardWidth + spacingX);
             const startX = -gridWidth / 2 + cardWidth / 2;
-            const startY = -cardHeight / 2;
+            const startY = -(row * (cardHeight + spacingY)) / 2;
+            
             return {
                 x: startX + col * (cardWidth + spacingX),
                 y: startY + row * (cardHeight + spacingY)
@@ -1098,207 +1099,182 @@
         }
 
         /**
-         * 对所有已添加节点执行自动布局（清除手动标记，重新计算位置并触发动画）
+         * 获取画布卡片位置（整合自动布局）
          */
-        window.autoLayoutAll = function() {
-            cardPositions.clear();
-            manuallyPositioned.clear();
+        function getCanvasCardPosition(index, total) {
+            const cardWidth = 260;
+            const cardHeight = 80;
+            const maxCols = Math.floor(Math.min(4, Math.sqrt(total) * 1.2));
+            const cols = Math.max(1, maxCols);
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            const gridWidth = cols * cardWidth;
+            const startX = -gridWidth / 2 + cardWidth / 2;
+            const startY = -cardHeight / 2;
+            return { x: startX + col * cardWidth, y: startY + row * cardHeight };
+        }
+
+        function renderCanvasCards() {
+            const oldCards = document.querySelectorAll('.field-card-canvas');
+            oldCards.forEach(card => card.remove());
+
+            const container = document.getElementById('canvasContent');
+            const total = addedFields.length;
 
             addedFields.forEach((field, index) => {
-                const pos = calculateAutoLayoutPosition(field.name, index);
-                cardPositions.set(field.name, pos);
-            });
-
-            // 重新渲染会带动画移动到新位置
-            renderCanvasCards();
-
-            showToast({
-                title: '成功',
-                message: `已为 ${addedFields.length} 个节点应用自动布局`,
-                type: 'SUCCESS',
-                autoClose: 2000
-            });
-        };
-
-        /**
-         * 增量式渲染卡片，支持位置动画（CSS transition）
-         * 保留已有 DOM，只更新内容与目标位置，新卡片从中心弹出
-         */
-        function renderCanvasCards() {
-            const container = document.getElementById('canvasContent');
-            const existingCards = new Map();
-            container.querySelectorAll('.field-card-canvas').forEach(card => {
-                existingCards.set(card.dataset.fieldName, card);
-            });
-
-            const canvasCenter = CANVAS_CENTER;
-
-            addedFields.forEach(field => {
                 let pos;
-                if (cardPositions.has(field.name)) {
+                
+                // 如果用户手动定位过，使用手动位置
+                if (cardPositions.has(field.name) && manuallyPositioned.has(field.name)) {
+                    pos = cardPositions.get(field.name);
+                } else if (cardPositions.has(field.name)) {
+                    // 已有自动计算的位置，直接使用
                     pos = cardPositions.get(field.name);
                 } else {
-                    pos = calculateAutoLayoutPosition(field.name, addedFields.length);
+                    // 新节点：使用智能自动布局算法
+                    pos = calculateAutoLayoutPosition(field.name, total);
                     cardPositions.set(field.name, pos);
                 }
 
+                // 从 allFields 中查找该字段的完整信息（包括 isComplex）
                 const fieldInfo = allFields.find(f => f.name === field.name);
                 const isComplex = fieldInfo ? fieldInfo.isComplex === true : false;
                 const displayValue = parseFieldValue(field.value, field.type);
 
-                let cardEl = existingCards.get(field.name);
-                const newLeft = canvasCenter + pos.x;
-                const newTop = canvasCenter + pos.y;
+                const cardEl = document.createElement('div');
+                cardEl.className = 'field-card-canvas';
+                cardEl.style.cssText = `
+                    position: absolute;
+                    left: ${CANVAS_CENTER + pos.x}px;
+                    top: ${CANVAS_CENTER + pos.y}px;
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--accent-blue);
+                    border-radius: 6px;
+                    padding: 10px 12px;
+                    min-width: 220px;
+                    max-width: 320px;
+                    cursor: grab;
+                    user-select: none;
+                    font-size: 0.8rem;
+                    z-index: 5;
+                `;
 
-                if (cardEl) {
-                    // 更新现有卡片
-                    existingCards.delete(field.name);
-
-                    // 更新内容（仅当字段值或复杂状态变化时）
-                    const inputEl = cardEl.querySelector('input');
-                    if (inputEl && inputEl.value !== displayValue) {
-                        inputEl.value = displayValue;
-                    }
-
-                    const btnEl = cardEl.querySelector('.subclass-btn');
-                    if (isComplex && !btnEl) {
-                        const btn = document.createElement('button');
-                        btn.className = 'subclass-btn';
-                        btn.style.cssText = 'margin-top: 6px; width: 100%; padding: 4px; background: var(--accent-blue); border: none; color: white; border-radius: 3px; cursor: pointer; font-size: 0.75rem;';
-                        btn.textContent = '→ 编辑子字段';
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            enterSubclass(field.name);
-                        });
-                        cardEl.appendChild(btn);
-                    } else if (!isComplex && btnEl) {
-                        btnEl.remove();
-                    }
-
-                    // 更新位置（触发 transition 动画）
-                    cardEl.style.left = newLeft + 'px';
-                    cardEl.style.top = newTop + 'px';
-                } else {
-                    // 创建新卡片，初始放在画布中心（以实现弹出动画）
-                    cardEl = document.createElement('div');
-                    cardEl.className = 'field-card-canvas';
-                    cardEl.dataset.fieldName = field.name;
-                    cardEl.style.cssText = `
-                        position: absolute;
-                        left: ${canvasCenter}px;
-                        top: ${canvasCenter}px;
-                        background: var(--bg-secondary);
-                        border: 1px solid var(--accent-blue);
-                        border-radius: 6px;
-                        padding: 10px 12px;
-                        min-width: 220px;
-                        max-width: 320px;
-                        cursor: grab;
-                        user-select: none;
-                        font-size: 0.8rem;
-                        z-index: 5;
-                        transform: scale(0.8);
-                        opacity: 0;
-                    `;
-
-                    cardEl.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <div>
-                                <span style="font-weight: 600; color: var(--accent-blue);">${field.name}</span>
-                                <span style="color: var(--text-secondary); margin-left: 8px; font-size: 0.7rem;">${field.type}</span>
-                            </div>
-                            <button onclick="event.stopPropagation(); deleteField('${field.name}')"
-                                style="background: transparent; border: none; color: var(--error); cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 0 4px;">&times;</button>
+                cardEl.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-weight: 600; color: var(--accent-blue);">${field.name}</span>
+                            <span style="color: var(--text-secondary); margin-left: 8px; font-size: 0.7rem;">${field.type}</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <label style="font-size: 0.75rem; color: var(--text-secondary);">值:</label>
-                            <input type="text"
-                                id="canvas-input-${field.name}"
-                                value="${escapeHtml(displayValue)}"
-                                placeholder="输入值..."
-                                style="flex: 1; min-width: 0; padding: 4px 8px; font-size: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 3px; color: var(--text-primary); outline: none;"
-                                onfocus="this.style.borderColor='var(--accent-blue)'"
-                                onblur="this.style.borderColor='var(--border-color)'"
-                                onkeydown="if(event.key==='Enter') { event.stopPropagation(); updateFieldValue('${field.name}', this.value); this.blur(); }"
-                                onchange="updateFieldValue('${field.name}', this.value)"
-                            />
-                        </div>
-                        ${isComplex ? `
-                            <button class="subclass-btn" onclick="event.stopPropagation(); enterSubclass('${field.name}')"
-                                    style="margin-top: 6px; width: 100%; padding: 4px; background: var(--accent-blue); border: none; color: white; border-radius: 3px; cursor: pointer; font-size: 0.75rem;">
-                                → 编辑子字段
-                            </button>
-                        ` : ''}
-                    `;
+                        <button onclick="event.stopPropagation(); deleteField('${field.name}')"
+                            style="background: transparent; border: none; color: var(--error); cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 0 4px;">&times;</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary);">值:</label>
+                        <input type="text"
+                            id="canvas-input-${field.name}"
+                            value="${escapeHtml(displayValue)}"
+                            placeholder="输入值..."
+                            style="flex: 1; min-width: 0; padding: 4px 8px; font-size: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 3px; color: var(--text-primary); outline: none;"
+                            onfocus="this.style.borderColor='var(--accent-blue)'"
+                            onblur="this.style.borderColor='var(--border-color)'"
+                            onkeydown="if(event.key==='Enter') { event.stopPropagation(); updateFieldValue('${field.name}', this.value); this.blur(); }"
+                            onchange="updateFieldValue('${field.name}', this.value)"
+                        />
+                    </div>
+                    ${isComplex ? `
+                        <button onclick="event.stopPropagation(); enterSubclass('${field.name}')" 
+                                style="margin-top: 6px; width: 100%; padding: 4px; background: var(--accent-blue); border: none; color: white; border-radius: 3px; cursor: pointer; font-size: 0.75rem;">
+                            → 编辑子字段
+                        </button>
+                    ` : ''}
+                `;
 
-                    // 拖拽事件
-                    cardEl.addEventListener('mousedown', (e) => {
-                        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-                        if (e.target.tagName === 'INPUT' || e.target.closest('input')) return;
+                cardEl.addEventListener('mousedown', (e) => {
+                    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                    if (e.target.tagName === 'INPUT' || e.target.closest('input')) return;
 
-                        // 拖拽期间禁用动画
-                        cardEl.classList.add('no-transition');
+                    let isDragging = false;
+                    let startX, startY, initialLeft, initialTop;
 
-                        let isDragging = false;
-                        let startX, startY, initialLeft, initialTop;
+                    const onMouseMove = (ev) => {
+                        if (!isDragging) {
+                            isDragging = true;
+                            cardEl.style.cursor = 'grabbing';
+                            cardEl.style.zIndex = '10';
+                        }
+                        const dx = (ev.clientX - startX) / currentScale;
+                        const dy = (ev.clientY - startY) / currentScale;
+                        cardEl.style.left = (initialLeft + dx) + 'px';
+                        cardEl.style.top = (initialTop + dy) + 'px';
+                    };
 
-                        const onMouseMove = (ev) => {
-                            if (!isDragging) {
-                                isDragging = true;
-                                cardEl.style.cursor = 'grabbing';
-                                cardEl.style.zIndex = '10';
-                            }
-                            const dx = (ev.clientX - startX) / currentScale;
-                            const dy = (ev.clientY - startY) / currentScale;
-                            cardEl.style.left = (initialLeft + dx) + 'px';
-                            cardEl.style.top = (initialTop + dy) + 'px';
-                        };
+                    const onMouseUp = () => {
+                        if (isDragging) {
+                            const newLeft = parseFloat(cardEl.style.left);
+                            const newTop = parseFloat(cardEl.style.top);
+                            cardPositions.set(field.name, {
+                                x: newLeft - CANVAS_CENTER,
+                                y: newTop - CANVAS_CENTER
+                            });
+                            manuallyPositioned.add(field.name);
+                        }
+                        cardEl.style.cursor = 'grab';
+                        cardEl.style.zIndex = '5';
+                        window.removeEventListener('mousemove', onMouseMove);
+                        window.removeEventListener('mouseup', onMouseUp);
+                    };
 
-                        const onMouseUp = () => {
-                            if (isDragging) {
-                                const newLeft = parseFloat(cardEl.style.left);
-                                const newTop = parseFloat(cardEl.style.top);
-                                cardPositions.set(field.name, {
-                                    x: newLeft - canvasCenter,
-                                    y: newTop - canvasCenter
-                                });
-                                manuallyPositioned.add(field.name);
-                            }
-                            cardEl.style.cursor = 'grab';
-                            cardEl.style.zIndex = '5';
-                            cardEl.classList.remove('no-transition'); // 恢复动画
-                            window.removeEventListener('mousemove', onMouseMove);
-                            window.removeEventListener('mouseup', onMouseUp);
-                        };
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    initialLeft = parseFloat(cardEl.style.left);
+                    initialTop = parseFloat(cardEl.style.top);
 
-                        startX = e.clientX;
-                        startY = e.clientY;
-                        initialLeft = parseFloat(cardEl.style.left);
-                        initialTop = parseFloat(cardEl.style.top);
+                    window.addEventListener('mousemove', onMouseMove);
+                    window.addEventListener('mouseup', onMouseUp);
 
-                        window.addEventListener('mousemove', onMouseMove);
-                        window.addEventListener('mouseup', onMouseUp);
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
 
-                        e.preventDefault();
-                        e.stopPropagation();
-                    });
-
-                    container.appendChild(cardEl);
-
-                    // 触发入场动画（从中心弹出）
-                    requestAnimationFrame(() => {
-                        cardEl.style.left = newLeft + 'px';
-                        cardEl.style.top = newTop + 'px';
-                        cardEl.style.transform = 'scale(1)';
-                        cardEl.style.opacity = '1';
-                    });
-                }
+                container.appendChild(cardEl);
             });
-
-            // 移除已经不存在的字段卡片
-            existingCards.forEach(card => card.remove());
         }
 
+        // 重置卡片布局函数（仅清除手动标记，重新自动排列）
+        window.resetCardPositions = function() {
+            cardPositions.clear();
+            manuallyPositioned.clear();
+            renderCanvasCards();
+        };
+
+        /**
+         * 对所有节点执行智能自动布局
+         */
+        window.autoLayoutAll = function() {
+            // 清除所有位置记录（包括手动定位的）
+            cardPositions.clear();
+            manuallyPositioned.clear();
+            
+            // 逐个重新计算每个节点的位置
+            addedFields.forEach((field, index) => {
+                const pos = calculateAutoLayoutPosition(field.name, index);
+                cardPositions.set(field.name, pos);
+            });
+            
+            // 重新渲染
+            renderCanvasCards();
+            
+            showToast({ 
+                title: '成功', 
+                message: `已为 ${addedFields.length} 个节点应用自动布局`, 
+                type: 'SUCCESS', 
+                autoClose: 2000 
+            });
+        };
+
+        /**
+         * 进入子类编辑模式
+         */
         window.enterSubclass = function(fieldName) {
             const newPath = fieldPath ? `${fieldPath}.${fieldName}` : fieldName;
             window.location.href = `?project=${encodeURIComponent(projectName)}&path=${encodeURIComponent(newPath)}`;
@@ -1400,6 +1376,7 @@
         const sidebar = document.getElementById('sidebar');
         const editorArea = document.getElementById('editorArea');
         const canvasTransform = document.getElementById('canvasTransform');
+        const canvasHint = document.getElementById('canvasHint');
         const coordIndicator = document.getElementById('coordIndicator');
         const coordX = document.getElementById('coordX');
         const coordY = document.getElementById('coordY');
@@ -1484,6 +1461,7 @@
             const dy = e.clientY - dragStart.y;
             if (!hasMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
                 hasMoved = true;
+                canvasHint.style.opacity = '0';
             }
             if (hasMoved) {
                 currentTranslateX = dragStart.tx + dx;
@@ -1511,16 +1489,17 @@
             showCoordIndicator(p.x, p.y);
         }, { passive: false });
 
-        // 重置视图，并调用自动布局（带动画）
+        // 重置视图，并同时重置卡片布局和自动布局
         function resetView() {
             const rect = editorArea.getBoundingClientRect();
             currentTranslateX = rect.width / 2 - CANVAS_CENTER;
             currentTranslateY = rect.height / 2 - CANVAS_CENTER;
             currentScale = 1;
             applyTransform();
+            canvasHint.style.opacity = '0.7';
             coordIndicator.classList.remove('visible');
-
-            // 触发自动布局，带动画移动卡片
+            
+            // 重置卡片位置并应用自动布局
             if (window.autoLayoutAll) {
                 window.autoLayoutAll();
             }
@@ -1588,10 +1567,6 @@
             initCanvasView();
             document.getElementById('fieldSearch').addEventListener('input', renderFieldList);
             fetchFields();
-            
-            // 启动自动刷新机制
-            startAutoRefresh();
-            
             setInterval(() => {
                 fetch('/api/dialog/next')
                     .then(r => r.json())
@@ -1608,11 +1583,6 @@
                     })
                     .catch(() => {});
             }, 300);
-        });
-        
-        // 页面卸载时停止自动刷新
-        window.addEventListener('beforeunload', () => {
-            stopAutoRefresh();
         });
 
         // 暴露全局
