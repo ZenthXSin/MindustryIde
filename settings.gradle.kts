@@ -26,4 +26,5 @@ dependencyResolutionManagement {
 rootProject.name = "MindustryIde"
 include(":app")
 include(":tool")
+include(":web:web")
  

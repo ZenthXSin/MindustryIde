@@ -250,13 +250,13 @@ class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> Strin
 
     fun toJson(): String {
         return run(this) ?: when {
-            // 值非空：可能是布尔、数字或普通字符串
-            value.isNotEmpty() -> {
+            // 值非空且不为 "null"：可能是布尔、数字或普通字符串
+            value.isNotEmpty() && value != "null" -> {
                 if (value.isBooleanString()) value
                 else if (value.isNumber()) value
                 else "\"$value\""
             }
-            // 值空：检查 typeValue
+            // 值为空或为 "null"：检查 typeValue
             typeValue is ClassBuild -> {
                 val classBuild = typeValue as ClassBuild
                 // 判断是否为基本类型或常见包装类
