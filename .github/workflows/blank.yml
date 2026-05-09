@@ -32,7 +32,8 @@ jobs:
         run: bash ./gradlew :tool:jar
 
       - name: Build web jar
-        run: bash ./web/web/gradlew bootJar
+        working-directory: web/web
+        run: bash ./gradlew bootJar
 
       - name: List build outputs
         run: |
