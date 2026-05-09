@@ -140,13 +140,23 @@ class ClassBuild(
     }
 
     fun toJson(): String {
-        if (value != "null") return if (value.isBooleanString()) {
-            value
-        } else if (value.isNumber()) {
-            value
-        } else {
-            "\"$value\""
+        // 如果 value 非空且不为 "null"，直接输出值
+        if (value.isNotEmpty() && value != "null") {
+            return if (value.isBooleanString()) {
+                value
+            } else if (value.isNumber()) {
+                value
+            } else {
+                "\"$value\""
+            }
         }
+        
+        // 如果没有子字段，输出 null（基本类型或空对象）
+        if (fieldBuilds.isEmpty()) {
+            return "null"
+        }
+        
+        // 有子字段，输出对象结构
         var ret = "{\n"
         ret += "\"type\": \"$name\"" + if (fieldBuilds.isEmpty()) "\n" else ",\n"
         for (fieldBuild in fieldBuilds) {
@@ -246,14 +256,23 @@ class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> Strin
                 else if (value.isNumber()) value
                 else "\"$value\""
             }
-            // 值空：检查是否为复杂类型
+            // 值空：检查 typeValue
             typeValue is ClassBuild -> {
-                // 对于 String 类型的 ClassBuild，直接输出空字符串（或 value 字段）
-                if ((typeValue as ClassBuild).classData == String::class.java) {
-                    if (value.isEmpty()) value = "null"
-                    "\"$value\""  // 此时 value 为空字符串，输出 ""
+                val classBuild = typeValue as ClassBuild
+                // 判断是否为基本类型或常见包装类
+                val isPrimitiveType = classBuild.classData.isPrimitive ||
+                    classBuild.classData.simpleName in listOf(
+                        "String", "Boolean", "Integer", "Float", "Double", 
+                        "Long", "Short", "Byte", "Character"
+                    ) ||
+                    classBuild.classData.name.startsWith("java.lang")
+                
+                if (isPrimitiveType) {
+                    // 基本类型：输出 null
+                    "null"
                 } else {
-                    (typeValue as ClassBuild).toJson()
+                    // 复杂类型：输出对象结构
+                    classBuild.toJson()
                 }
             }
             else -> typeValue?.toString() ?: "null"

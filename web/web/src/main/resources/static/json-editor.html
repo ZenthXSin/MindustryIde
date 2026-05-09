@@ -45,7 +45,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 顶部导航栏 */
         .navbar {
             background-color: var(--bg-secondary);
             border-bottom: 1px solid var(--border-color);
@@ -119,7 +118,6 @@
             border-color: var(--accent-blue-hover);
         }
 
-        /* 主内容区 */
         .container {
             display: flex;
             width: 100%;
@@ -128,7 +126,6 @@
             position: relative;
         }
 
-        /* 遮罩层（移动端侧边栏展开时使用） */
         .sidebar-overlay {
             display: none;
             position: absolute;
@@ -144,13 +141,13 @@
             display: block;
         }
 
-        /* 左侧边栏 */
         .sidebar {
             position: relative;
             background-color: var(--bg-secondary);
             border-right: 1px solid var(--border-color);
-            width: var(--sidebar-width);
-            min-width: var(--sidebar-width);
+            width: fit-content;
+            min-width: 200px;
+            max-width: 500px;
             transition: width 0.2s ease, min-width 0.2s ease, border 0.2s ease;
             display: flex;
             flex-direction: column;
@@ -190,8 +187,25 @@
         .sidebar-content {
             flex: 1;
             overflow-y: auto;
+            overflow-x: auto;
             padding: 16px;
             transition: opacity 0.2s ease, visibility 0.2s ease;
+            min-width: min-content;
+        }
+
+        .sidebar-content > * {
+            min-width: min-content;
+            white-space: nowrap;
+        }
+
+        #fieldSearch {
+            width: 100%;
+            min-width: 200px;
+        }
+
+        #fieldList {
+            width: 100%;
+            min-width: min-content;
         }
 
         .sidebar.collapsed .sidebar-content {
@@ -199,7 +213,6 @@
             visibility: hidden;
         }
 
-        /* 侧边栏展开/收起按钮 */
         .sidebar-expand-btn {
             position: absolute;
             right: 0;
@@ -227,9 +240,6 @@
             color: var(--text-primary);
         }
 
-        /* ======================================== */
-        /* 编辑器画布区域 */
-        /* ======================================== */
         .editor-area {
             flex: 1;
             position: relative;
@@ -248,7 +258,6 @@
             cursor: grabbing;
         }
 
-        /* 画布变换层 - 包含网格和所有内容 */
         .canvas-transform-layer {
             position: absolute;
             top: 0;
@@ -258,27 +267,19 @@
             transform-origin: 0 0;
             transform: translate(0px, 0px) scale(1);
             will-change: transform;
-            /* 网格背景 */
             background-image:
-                /* 次网格线 - 每100px (5格) */ linear-gradient(to right,
-            var(--grid-line-major) 1px,
-            transparent 1px),
-            linear-gradient(to bottom, var(--grid-line-major) 1px, transparent 1px),
-                /* 主网格线 - 每20px */ linear-gradient(to right,
-                    var(--grid-line-subtle) 1px,
-                    transparent 1px),
-            linear-gradient(to bottom, var(--grid-line-subtle) 1px, transparent 1px);
+                    linear-gradient(to right, var(--grid-line-major) 1px, transparent 1px),
+                    linear-gradient(to bottom, var(--grid-line-major) 1px, transparent 1px),
+                    linear-gradient(to right, var(--grid-line-subtle) 1px, transparent 1px),
+                    linear-gradient(to bottom, var(--grid-line-subtle) 1px, transparent 1px);
             background-size:
                     100px 100px,
                     100px 100px,
                     20px 20px,
                     20px 20px;
             background-position: 0 0, 0 0, 0 0, 0 0;
-            /* 原点十字标记（在0,0处） */
-            /* 通过额外的径向渐变或使用box-shadow在原点做标记太复杂，用伪元素或单独元素实现 */;
         }
 
-        /* 原点标记 - 画布坐标(0,0)处的十字线 */
         .canvas-origin-marker {
             position: absolute;
             left: 0;
@@ -296,21 +297,18 @@
             background-color: var(--canvas-origin-marker);
         }
         .canvas-origin-marker::before {
-            /* 水平线 */
             left: 0;
             top: 20px;
             width: 41px;
             height: 1px;
         }
         .canvas-origin-marker::after {
-            /* 垂直线 */
             left: 20px;
             top: 0;
             width: 1px;
             height: 41px;
         }
 
-        /* 画布内容容器 */
         .canvas-content {
             position: absolute;
             top: 0;
@@ -325,7 +323,6 @@
             pointer-events: auto;
         }
 
-        /* 画布中央提示 */
         .canvas-hint {
             position: absolute;
             left: 6000px;
@@ -348,7 +345,6 @@
             margin-top: 6px;
         }
 
-        /* 缩放控件 - 固定在编辑器区域右下角 */
         .zoom-controls {
             position: absolute;
             bottom: 20px;
@@ -417,7 +413,6 @@
             flex-shrink: 0;
         }
 
-        /* 坐标指示器 */
         .coord-indicator {
             position: absolute;
             bottom: 20px;
@@ -508,7 +503,6 @@
             }
         }
 
-        /* Toast 通知系统样式 */
         .toast-container {
             position: fixed;
             z-index: 100000;
@@ -550,7 +544,7 @@
             opacity: 0;
             transform: translateX(100%);
             transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: auto;
             display: flex;
             align-items: center;
@@ -566,7 +560,7 @@
             opacity: 0;
             transform: translateX(100%);
             transition: opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-                        transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+            transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .toast-content {
@@ -582,11 +576,6 @@
             flex-shrink: 0;
             width: 16px;
             height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            color: white;
         }
 
         .toast-text {
@@ -600,13 +589,10 @@
         .toast-title {
             font-weight: 600;
             font-size: 0.9rem;
-            color: var(--text-primary);
-            white-space: nowrap;
         }
 
         .toast-message {
             font-size: 0.85rem;
-            color: var(--text-primary);
             line-height: 1.4;
             word-wrap: break-word;
         }
@@ -617,41 +603,39 @@
             color: var(--text-secondary);
             font-size: 1.3rem;
             cursor: pointer;
-            padding: 2px 4px;
-            margin: -2px;
-            width: 20px;
-            height: 20px;
-            line-height: 1;
-            flex-shrink: 0;
-            border-radius: 3px;
-            transition: color 0.15s ease,
-                        background-color 0.15s ease;
         }
 
-        .toast-close:hover {
-            color: var(--text-primary);
-            background-color: rgba(255, 255, 255, 0.1);
+        /* IDEA Darcula 风格滚动条 */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
         }
 
-        .toast-success .toast-icon {
-            background-color: #59a869;
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+            border-radius: 0;
         }
 
-        .toast-error .toast-icon {
-            background-color: #ff4444;
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--bg-primary);
+            border-radius: 6px;
         }
 
-        .toast-warning .toast-icon {
-            background-color: #ffa500;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5e6163;
         }
 
-        .toast-info .toast-icon {
-            background-color: #3574f0;
+        ::-webkit-scrollbar-thumb:active {
+            background: #6a6d6f;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: var(--bg-primary);
         }
     </style>
 </head>
 <body>
-<!-- 顶部导航栏 -->
 <nav class="navbar">
     <div class="navbar-brand">
         <div>
@@ -660,65 +644,48 @@
         <div class="navbar-project" id="projectName">项目名称</div>
     </div>
     <div class="navbar-actions">
-        <button type="button" class="navbar-btn" onclick="goBack()">← 返回</button>
-        <button type="button" class="navbar-btn primary" onclick="exportProjectToClipboard()">导出</button>
+        <button class="navbar-btn" onclick="goBack()">← 返回</button>
+        <button class="navbar-btn primary" onclick="exportProjectToClipboard()">导出</button>
     </div>
 </nav>
 
-<!-- 主内容区 -->
 <div class="container">
-    <!-- 移动端遮罩 -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebarOnMobile()"></div>
 
-    <!-- 左侧边栏 -->
     <aside class="sidebar" id="sidebar">
-        <button type="button" class="sidebar-expand-btn" id="sidebarToggleBtn" aria-label="收起侧边栏" title="展开/收起侧边栏" onclick="toggleSidebar()">&lt;</button>
+        <button class="sidebar-expand-btn" id="sidebarToggleBtn" onclick="toggleSidebar()">&lt;</button>
         <div class="sidebar-header">
             <span class="sidebar-title">字段选择</span>
         </div>
         <div class="sidebar-content" id="sidebarContent">
-            <!-- 搜索框 -->
             <input type="text" id="fieldSearch" placeholder="搜索字段..."
                    style="width: 100%; padding: 8px; margin-bottom: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-family: 'JetBrains Mono'; border-radius: 4px;">
-            <!-- 字段列表 -->
             <div id="fieldList" style="display: flex; flex-direction: column; gap: 6px;"></div>
-            <!-- 刷新按钮 -->
-            <button onclick="refreshFields()" style="width: 100%; margin-top: 12px; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; border-radius: 4px;">🔄 刷新</button>
+            <button onclick="refreshFields()" style="width: 100%; margin-top: 12px; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; border-radius: 4px;">刷新</button>
         </div>
     </aside>
 
-    <!-- 编辑器画布区域 -->
     <div class="editor-area" id="editorArea">
-        <!-- 画布变换层 -->
         <div class="canvas-transform-layer" id="canvasTransform">
-            <!-- 原点标记 -->
             <div class="canvas-origin-marker"></div>
-            <!-- 画布内容 -->
             <div class="canvas-content" id="canvasContent">
-                <div class="canvas-hint" id="canvasHint">
-                    🖱 拖拽平移 &nbsp;|&nbsp; 滚轮缩放
-                    <span>双击重置视图 · 右下角控件调节缩放</span>
-                </div>
             </div>
         </div>
 
-        <!-- 坐标指示器 -->
         <div class="coord-indicator" id="coordIndicator">
             画布: <span id="coordX">0</span>, <span id="coordY">0</span>
         </div>
 
-        <!-- 缩放控件 -->
         <div class="zoom-controls" id="zoomControls">
-            <button class="zoom-btn" id="zoomOutBtn" title="缩小" aria-label="缩小">−</button>
-            <span class="zoom-label" id="zoomLabel" title="点击重置缩放">100%</span>
-            <button class="zoom-btn" id="zoomInBtn" title="放大" aria-label="放大">+</button>
+            <button class="zoom-btn" id="zoomOutBtn" title="缩小">−</button>
+            <span class="zoom-label" id="zoomLabel" title="点击重置缩放和布局">100%</span>
+            <button class="zoom-btn" id="zoomInBtn" title="放大">+</button>
             <span class="zoom-divider"></span>
-            <button class="zoom-btn" id="zoomResetBtn" title="重置视图" aria-label="重置视图">↺</button>
+            <button class="zoom-btn" id="zoomResetBtn" title="重置视图和自动布局">↺</button>
         </div>
     </div>
 </div>
 
-<!-- Toast 通知容器 -->
 <div class="toast-container top-right" id="toastContainerTopRight"></div>
 <div class="toast-container top-left" id="toastContainerTopLeft"></div>
 <div class="toast-container bottom-right" id="toastContainerBottomRight"></div>
@@ -726,24 +693,34 @@
 
 <script>
     (function() {
-        // ============ URL 参数 & 项目名称 ============
         const urlParams = new URLSearchParams(window.location.search);
         const projectName = urlParams.get('project') || '未命名项目';
+        const fieldPath = urlParams.get('path') || '';  // 嵌套路径，空表示顶层
+        
         document.getElementById('projectName').textContent = projectName;
 
-        // ============ 字段数据 ============
         let allFields = [];
         let addedFields = [];
-        let selectedFieldForEdit = null;
+        let currentClassName = '';  // 当前类名
 
-        // ============ 获取项目字段 ============
         async function fetchFields() {
             try {
-                const res = await fetch(`/api/dialog/project/${encodeURIComponent(projectName)}/fields`);
+                let url;
+                if (fieldPath) {
+                    // 子类模式：获取嵌套字段的子字段
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-children?path=${encodeURIComponent(fieldPath)}`;
+                } else {
+                    // 项目模式：获取顶层字段
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/fields`;
+                }
+                
+                const res = await fetch(url);
                 const data = await res.json();
                 if (data.success) {
                     allFields = data.allFields || [];
                     addedFields = data.addedFields || [];
+                    currentClassName = data.className || '';
+                    renderBreadcrumb();  // 渲染面包屑
                     renderFieldList();
                     renderCanvasCards();
                 } else {
@@ -754,76 +731,125 @@
             }
         }
 
-        // 刷新字段的包装函数
         window.refreshFields = function() {
             fetchFields();
-            showToast({ title: '提示', message: '正在刷新字段...', type: 'INFO', autoClose: 1000 });
+            showToast({ title: '提示', message: '正在刷新...', type: 'INFO', autoClose: 1000 });
         };
 
-        // ============ 渲染侧边栏字段列表 ============
+        // 渲染面包屑导航
+        function renderBreadcrumb() {
+            const navbarProject = document.getElementById('projectName');
+            
+            if (!fieldPath) {
+                // 项目模式：只显示项目名
+                navbarProject.textContent = projectName;
+            } else {
+                // 子类模式：显示路径
+                const parts = fieldPath.split('.');
+                let html = `<a href="?project=${encodeURIComponent(projectName)}" style="color: var(--text-primary); text-decoration: none;">${projectName}</a>`;
+                
+                let currentPath = '';
+                parts.forEach((part, index) => {
+                    currentPath += (index > 0 ? '.' : '') + part;
+                    if (index === parts.length - 1) {
+                        // 最后一级显示为粗体（当前层级）
+                        html += ` > <strong>${part}</strong>`;
+                    } else {
+                        // 中间层级可以点击跳转到对应位置
+                        html += ` > <a href="?project=${encodeURIComponent(projectName)}&path=${encodeURIComponent(currentPath)}" style="color: var(--accent-blue); text-decoration: none; cursor: pointer;">${part}</a>`;
+                    }
+                });
+                
+                navbarProject.innerHTML = html;
+            }
+        }
+
+        /**
+         * 返回功能：如果有上一级就返回上一级，否则返回主页
+         */
+        window.goBack = function() {
+            // 从 URL 重新获取参数，确保获取最新值
+            const currentParams = new URLSearchParams(window.location.search);
+            const currentProject = currentParams.get('project') || '未命名项目';
+            const currentFieldPath = currentParams.get('path') || '';
+            
+            if (!currentFieldPath) {
+                // 没有路径，已经在顶层，返回首页
+                window.location.href = '/';
+                return;
+            }
+            
+            const parts = currentFieldPath.split('.');
+            if (parts.length === 1) {
+                // 只有一层路径，返回项目主页
+                window.location.href = `?project=${encodeURIComponent(currentProject)}`;
+            } else {
+                // 多层路径，返回上一级
+                const parentParts = parts.slice(0, -1);
+                const parentPath = parentParts.join('.');
+                window.location.href = `?project=${encodeURIComponent(currentProject)}&path=${encodeURIComponent(parentPath)}`;
+            }
+        };
+
         function renderFieldList() {
             const container = document.getElementById('fieldList');
             const searchTerm = document.getElementById('fieldSearch').value.toLowerCase();
             let html = '';
-            
+
             const addedNames = new Set(addedFields.map(f => f.name));
-            
+
             allFields.forEach(field => {
                 if (searchTerm && !field.name.toLowerCase().includes(searchTerm)) return;
-                
+
                 const isAdded = addedNames.has(field.name);
-                const addedField = isAdded ? addedFields.find(f => f.name === field.name) : null;
-                const isComplex = !['String','Boolean','Int','Float','Double','Long','Short','Byte','Char'].includes(field.type);
-                
+                const isComplex = field.isComplex === true; // 使用后端返回的 isComplex 字段
+
                 html += `
-                    <div style="padding: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="padding: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; min-width: min-content;">
+                        <div style="display: flex; justify-content: space-between; gap: 8px; min-width: min-content;">
                             <div style="flex: 1; min-width: 0;">
                                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                    <span style="font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(field.name)}">${field.name}</span>
-                                    <span style="font-size: 0.7rem; color: var(--text-secondary); background: var(--bg-secondary); padding: 1px 6px; border-radius: 3px;">${field.type}</span>
-                                    ${field.isRequired ? '<span style="color: orange; font-weight: bold;" title="必填字段">*</span>' : ''}
-                                    ${isAdded ? '<span style="font-size: 0.65rem; color: var(--success);">●</span>' : ''}
+                                    <span style="font-weight: 600;">${field.name}</span>
+                                    <span style="font-size: 0.7rem; background: var(--bg-secondary); padding: 1px 6px; border-radius: 3px;">${field.type}</span>
+                                    ${field.isRequired ? '<span style="color: orange;">*</span>' : ''}
+                                    ${isAdded ? '<span style="color: var(--success);">●</span>' : ''}
                                 </div>
-                                ${field.notes || (field.defaultValue && field.defaultValue !== 'null') ? `
-                                    <div style="margin-top: 4px; background: var(--bg-secondary); padding: 6px 8px; border-radius: 3px; border-left: 2px solid var(--accent-blue);">
-                                        ${field.notes ? `
-                                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 3px;">
-                                                <span style="font-size: 0.65rem; font-weight: 600; color: var(--text-secondary);">📖 文档:</span>
-                                                <div style="margin-top: 2px; line-height: 1.4; word-break: break-word;">${escapeHtml(field.notes)}</div>
-                                            </div>
-                                        ` : ''}
-                                        ${field.defaultValue && field.defaultValue !== 'null' ? `
-                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                                                <span style="font-size: 0.65rem; font-weight: 600; color: var(--text-secondary);">📝 默认值:</span>
-                                                <span style="margin-left: 4px; color: var(--success);">${escapeHtml(field.defaultValue)}</span>
-                                            </div>
-                                        ` : ''}
-                                    </div>
-                                ` : ''}
+                                ${field.notes ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; white-space: normal;">📖 ${escapeHtml(field.notes)}</div>` : ''}
+                                ${field.defaultValue && field.defaultValue !== 'null' ? `<div style="font-size: 0.75rem; color: var(--text-secondary); white-space: normal;">📝 ${escapeHtml(field.defaultValue)}</div>` : ''}
                             </div>
-                            <div style="display: flex; gap: 4px; align-items: center; flex-shrink: 0; margin-left: 8px;">
+                            <div style="display: flex; gap: 4px; flex-shrink: 0;">
                                 ${isAdded ? `
-                                    <button onclick="deleteField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--error); border: none; color: white; border-radius: 3px; cursor: pointer;" title="删除字段">×</button>
+                                    <button onclick="deleteField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--error); border: none; color: white; border-radius: 3px;">×</button>
                                 ` : `
-                                    <button onclick="addField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--success); border: none; color: white; border-radius: 3px; cursor: pointer;" title="添加字段">+</button>
+                                    <button onclick="addField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--success); border: none; color: white; border-radius: 3px;">+</button>
                                 `}
                             </div>
                         </div>
                     </div>
                 `;
             });
-            
+
             container.innerHTML = html || '<div style="color: var(--text-secondary); text-align: center; padding: 16px;">无匹配字段</div>';
         }
 
-        // ============ 操作函数 ============
-        async function addField(fieldName) {
+        window.addField = async function(fieldName) {
             try {
-                const res = await fetch(`/api/dialog/project/${encodeURIComponent(projectName)}/field`, {
+                let url, body;
+                
+                if (fieldPath) {
+                    // 子类模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-child`;
+                    body = JSON.stringify({ path: fieldPath, fieldName });
+                } else {
+                    // 项目模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field`;
+                    body = JSON.stringify({ fieldName });
+                }
+                
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fieldName })
+                    body: body
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -835,26 +861,32 @@
             } catch (err) {
                 showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
             }
-        }
-        window.addField = addField;
+        };
 
-        // 已删除 editFieldValue 函数，改为直接内联编辑
-
-        async function updateFieldValue(fieldName, value) {
-            // 查找当前字段的旧值
+        window.updateFieldValue = async function(fieldName, value) {
             const currentField = addedFields.find(f => f.name === fieldName);
             if (!currentField) return;
-            
+
             const oldValue = parseFieldValue(currentField.value, currentField.type);
-            
-            // 如果值没有改变，不发送请求
             if (oldValue === value) return;
-            
+
             try {
-                const res = await fetch(`/api/dialog/project/${encodeURIComponent(projectName)}/field`, {
+                let url, body;
+                
+                if (fieldPath) {
+                    // 子类模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-child`;
+                    body = JSON.stringify({ path: fieldPath, fieldName, value });
+                } else {
+                    // 项目模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field`;
+                    body = JSON.stringify({ fieldName, value });
+                }
+                
+                const res = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fieldName, value: value })
+                    body: body
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -862,24 +894,33 @@
                     fetchFields();
                 } else {
                     showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
-                    // 失败时重新渲染以恢复旧值
                     fetchFields();
                 }
             } catch (err) {
                 showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
-                // 错误时重新渲染以恢复旧值
                 fetchFields();
             }
-        }
-        window.updateFieldValue = updateFieldValue;
+        };
 
-        async function deleteField(fieldName) {
+        window.deleteField = async function(fieldName) {
             if (!confirm(`确定删除字段 ${fieldName}？`)) return;
             try {
-                const res = await fetch(`/api/dialog/project/${encodeURIComponent(projectName)}/field`, {
+                let url, body;
+                
+                if (fieldPath) {
+                    // 子类模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-child`;
+                    body = JSON.stringify({ path: fieldPath, fieldName });
+                } else {
+                    // 项目模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field`;
+                    body = JSON.stringify({ fieldName });
+                }
+                
+                const res = await fetch(url, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fieldName })
+                    body: body
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -891,189 +932,355 @@
             } catch (err) {
                 showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
             }
-        }
-        window.deleteField = deleteField;
+        };
 
-        function tryExpandSubfields(fieldName) {
-            showToast({ title: '提示', message: `暂不支持编辑 ${fieldName} 的子字段`, type: 'INFO', autoClose: 2000 });
-        }
-
-        // ============ 画布卡片渲染 ============
-        let cardPositions = new Map(); // 存储每个字段的自定义位置
-        
-        // 解析字段值，提取实际显示的字符串
         function parseFieldValue(value, fieldType) {
             if (!value || value === 'null' || value === '') return '';
-            
             try {
-                // 尝试解析 JSON
                 const parsed = JSON.parse(value);
-                
-                // 如果是 String 类型，直接返回 value 字段的值
-                if (fieldType === 'String' && typeof parsed === 'object' && parsed.value !== undefined) {
-                    return parsed.value;
-                }
-                
-                // 如果是基本类型，尝试提取
-                if (typeof parsed === 'object' && parsed.value !== undefined) {
-                    return String(parsed.value);
-                }
-                
-                // 如果是对象，返回简化的表示
-                if (typeof parsed === 'object') {
-                    return JSON.stringify(parsed).substring(0, 50) + (JSON.stringify(parsed).length > 50 ? '...' : '');
-                }
-                
+                if (fieldType === 'String' && typeof parsed === 'object' && parsed.value !== undefined) return parsed.value;
+                if (typeof parsed === 'object' && parsed.value !== undefined) return String(parsed.value);
+                if (typeof parsed === 'object') return JSON.stringify(parsed).substring(0, 50) + (JSON.stringify(parsed).length > 50 ? '...' : '');
                 return String(parsed);
             } catch (e) {
-                // 如果不是 JSON，直接返回原值
                 return value;
             }
         }
-        
-        function getCanvasCardPosition(index) {
-            const cardHeight = 50;
-            const gap = 8;
-            return { x: 0, y: index * (cardHeight + gap) };
+
+        // 自动布局系统
+        let cardPositions = new Map();
+        let manuallyPositioned = new Set();
+
+        /**
+         * 力导向布局算法 - 为新节点找到最佳位置
+         * @param {string} fieldName - 新字段名称
+         * @param {number} totalCards - 当前卡片总数
+         * @returns {{x: number, y: number}} - 推荐的坐标位置
+         */
+        function calculateAutoLayoutPosition(fieldName, totalCards) {
+            const cardWidth = 260;
+            const cardHeight = 80;
+            const spacingX = 30;  // 水平间距
+            const spacingY = 25;  // 垂直间距
+            
+            // 如果没有其他卡片，放在中心
+            if (totalCards === 0) {
+                return { x: 0, y: 0 };
+            }
+
+            // 收集所有现有卡片的位置和尺寸
+            const existingNodes = [];
+            cardPositions.forEach((pos, name) => {
+                if (name !== fieldName) {
+                    existingNodes.push({
+                        x: pos.x,
+                        y: pos.y,
+                        width: cardWidth,
+                        height: cardHeight
+                    });
+                }
+            });
+
+            // 策略1：尝试在右侧或下方找到空隙
+            const candidatePositions = generateCandidatePositions(existingNodes, cardWidth, cardHeight, spacingX, spacingY);
+            
+            // 评估每个候选位置的得分（考虑重叠、距离等）
+            let bestPosition = null;
+            let bestScore = Infinity;
+
+            for (const candidate of candidatePositions) {
+                const score = evaluatePosition(candidate, existingNodes, cardWidth, cardHeight);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestPosition = candidate;
+                }
+            }
+
+            // 如果找到了合适的位置，返回它
+            if (bestPosition) {
+                return bestPosition;
+            }
+
+            // 策略2：网格扩展（后备方案）
+            return fallbackGridLayout(totalCards, cardWidth, cardHeight, spacingX, spacingY);
+        }
+
+        /**
+         * 生成候选位置列表
+         */
+        function generateCandidatePositions(nodes, cardWidth, cardHeight, spacingX, spacingY) {
+            const candidates = [];
+            const margin = 50; // 边界留白
+
+            // 在每个现有节点的四周生成候选位置
+            nodes.forEach(node => {
+                // 右侧
+                candidates.push({ x: node.x + node.width + spacingX, y: node.y });
+                // 左侧
+                candidates.push({ x: node.x - cardWidth - spacingX, y: node.y });
+                // 下方
+                candidates.push({ x: node.x, y: node.y + node.height + spacingY });
+                // 上方
+                candidates.push({ x: node.x, y: node.y - cardHeight - spacingY });
+                // 右下角
+                candidates.push({ x: node.x + node.width + spacingX, y: node.y + node.height + spacingY });
+                // 左下角
+                candidates.push({ x: node.x - cardWidth - spacingX, y: node.y + node.height + spacingY });
+            });
+
+            // 添加从原点向外扩展的环形位置
+            const rings = 3;
+            for (let ring = 1; ring <= rings; ring++) {
+                const radius = ring * (cardWidth + spacingX);
+                const pointsPerRing = Math.max(8, ring * 4);
+                for (let i = 0; i < pointsPerRing; i++) {
+                    const angle = (i / pointsPerRing) * Math.PI * 2;
+                    candidates.push({
+                        x: Math.cos(angle) * radius - cardWidth / 2,
+                        y: Math.sin(angle) * radius - cardHeight / 2
+                    });
+                }
+            }
+
+            return candidates;
+        }
+
+        /**
+         * 评估位置的得分（越低越好）
+         */
+        function evaluatePosition(candidate, nodes, cardWidth, cardHeight) {
+            let score = 0;
+            const minDistance = 20; // 最小允许距离
+
+            // 检查与所有现有节点的重叠和距离
+            nodes.forEach(node => {
+                const dx = Math.abs(candidate.x - node.x);
+                const dy = Math.abs(candidate.y - node.y);
+                
+                // 计算实际距离
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // 如果重叠，给予极高惩罚
+                if (dx < (cardWidth + minDistance) && dy < (cardHeight + minDistance)) {
+                    score += 10000;
+                }
+                
+                // 距离越近，惩罚越大（反比关系）
+                if (distance > 0) {
+                    score += 1000 / distance;
+                }
+            });
+
+            // 偏好靠近中心的区域（避免过于分散）
+            const distanceFromCenter = Math.sqrt(candidate.x * candidate.x + candidate.y * candidate.y);
+            score += distanceFromCenter * 0.1;
+
+            return score;
+        }
+
+        /**
+         * 后备的网格布局算法
+         */
+        function fallbackGridLayout(totalCards, cardWidth, cardHeight, spacingX, spacingY) {
+            const maxCols = Math.floor(Math.min(5, Math.sqrt(totalCards + 1) * 1.3));
+            const cols = Math.max(1, maxCols);
+            const index = totalCards; // 新卡片的索引
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            
+            const gridWidth = cols * (cardWidth + spacingX);
+            const startX = -gridWidth / 2 + cardWidth / 2;
+            const startY = -(row * (cardHeight + spacingY)) / 2;
+            
+            return {
+                x: startX + col * (cardWidth + spacingX),
+                y: startY + row * (cardHeight + spacingY)
+            };
+        }
+
+        /**
+         * 获取画布卡片位置（整合自动布局）
+         */
+        function getCanvasCardPosition(index, total) {
+            const cardWidth = 260;
+            const cardHeight = 80;
+            const maxCols = Math.floor(Math.min(4, Math.sqrt(total) * 1.2));
+            const cols = Math.max(1, maxCols);
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            const gridWidth = cols * cardWidth;
+            const startX = -gridWidth / 2 + cardWidth / 2;
+            const startY = -cardHeight / 2;
+            return { x: startX + col * cardWidth, y: startY + row * cardHeight };
         }
 
         function renderCanvasCards() {
-            // 清除旧的卡片
             const oldCards = document.querySelectorAll('.field-card-canvas');
             oldCards.forEach(card => card.remove());
-            
+
             const container = document.getElementById('canvasContent');
-            
+            const total = addedFields.length;
+
             addedFields.forEach((field, index) => {
-                // 检查是否有自定义位置
                 let pos;
-                if (cardPositions.has(field.name)) {
+                
+                // 如果用户手动定位过，使用手动位置
+                if (cardPositions.has(field.name) && manuallyPositioned.has(field.name)) {
+                    pos = cardPositions.get(field.name);
+                } else if (cardPositions.has(field.name)) {
+                    // 已有自动计算的位置，直接使用
                     pos = cardPositions.get(field.name);
                 } else {
-                    pos = getCanvasCardPosition(index);
+                    // 新节点：使用智能自动布局算法
+                    pos = calculateAutoLayoutPosition(field.name, total);
                     cardPositions.set(field.name, pos);
                 }
-                
-                const isComplex = !['String','Boolean','Int','Float','Double','Long','Short','Byte','Char'].includes(field.type);
-                
-                // 解析实际显示的值
+
+                // 从 allFields 中查找该字段的完整信息（包括 isComplex）
+                const fieldInfo = allFields.find(f => f.name === field.name);
+                const isComplex = fieldInfo ? fieldInfo.isComplex === true : false;
                 const displayValue = parseFieldValue(field.value, field.type);
-                
+
                 const cardEl = document.createElement('div');
                 cardEl.className = 'field-card-canvas';
                 cardEl.style.cssText = `
-                    position: absolute; 
-                    left: ${CANVAS_CENTER + pos.x}px; 
-                    top: ${CANVAS_CENTER + pos.y}px; 
-                    background: var(--bg-secondary); 
-                    border: 1px solid var(--accent-blue); 
-                    border-radius: 6px; 
-                    padding: 10px 12px; 
-                    min-width: 220px; 
+                    position: absolute;
+                    left: ${CANVAS_CENTER + pos.x}px;
+                    top: ${CANVAS_CENTER + pos.y}px;
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--accent-blue);
+                    border-radius: 6px;
+                    padding: 10px 12px;
+                    min-width: 220px;
                     max-width: 320px;
-                    cursor: grab; 
-                    user-select: none; 
+                    cursor: grab;
+                    user-select: none;
                     font-size: 0.8rem;
                     z-index: 5;
                 `;
-                
+
                 cardEl.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div>
                             <span style="font-weight: 600; color: var(--accent-blue);">${field.name}</span>
                             <span style="color: var(--text-secondary); margin-left: 8px; font-size: 0.7rem;">${field.type}</span>
                         </div>
-                        <button onclick="event.stopPropagation(); deleteField('${field.name}')" 
-                            style="background: transparent; border: none; color: var(--error); cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 0 4px;" 
-                            title="删除字段">&times;</button>
+                        <button onclick="event.stopPropagation(); deleteField('${field.name}')"
+                            style="background: transparent; border: none; color: var(--error); cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 0 4px;">&times;</button>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <label style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap;">值:</label>
-                        <input type="text" 
-                            id="canvas-input-${field.name}" 
-                            value="${escapeHtml(displayValue)}" 
+                        <label style="font-size: 0.75rem; color: var(--text-secondary);">值:</label>
+                        <input type="text"
+                            id="canvas-input-${field.name}"
+                            value="${escapeHtml(displayValue)}"
                             placeholder="输入值..."
-                            style="flex: 1; min-width: 0; padding: 4px 8px; font-size: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 3px; color: var(--text-primary); outline: none; transition: all 0.2s;"
-                            onfocus="this.style.borderColor='var(--accent-blue)'; this.style.boxShadow='0 0 0 2px rgba(59, 130, 246, 0.1)'"
-                            onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'"
+                            style="flex: 1; min-width: 0; padding: 4px 8px; font-size: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 3px; color: var(--text-primary); outline: none;"
+                            onfocus="this.style.borderColor='var(--accent-blue)'"
+                            onblur="this.style.borderColor='var(--border-color)'"
                             onkeydown="if(event.key==='Enter') { event.stopPropagation(); updateFieldValue('${field.name}', this.value); this.blur(); }"
                             onchange="updateFieldValue('${field.name}', this.value)"
                         />
                     </div>
-                    ${isComplex ? '<div style="color: var(--text-secondary); font-size: 0.65rem; margin-top: 6px;">可展开子字段 (暂不支持)</div>' : ''}
+                    ${isComplex ? `
+                        <button onclick="event.stopPropagation(); enterSubclass('${field.name}')" 
+                                style="margin-top: 6px; width: 100%; padding: 4px; background: var(--accent-blue); border: none; color: white; border-radius: 3px; cursor: pointer; font-size: 0.75rem;">
+                            → 编辑子字段
+                        </button>
+                    ` : ''}
                 `;
-                
-                // 添加拖拽功能
-                addDragFunctionality(cardEl, field.name);
-                
+
+                cardEl.addEventListener('mousedown', (e) => {
+                    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                    if (e.target.tagName === 'INPUT' || e.target.closest('input')) return;
+
+                    let isDragging = false;
+                    let startX, startY, initialLeft, initialTop;
+
+                    const onMouseMove = (ev) => {
+                        if (!isDragging) {
+                            isDragging = true;
+                            cardEl.style.cursor = 'grabbing';
+                            cardEl.style.zIndex = '10';
+                        }
+                        const dx = (ev.clientX - startX) / currentScale;
+                        const dy = (ev.clientY - startY) / currentScale;
+                        cardEl.style.left = (initialLeft + dx) + 'px';
+                        cardEl.style.top = (initialTop + dy) + 'px';
+                    };
+
+                    const onMouseUp = () => {
+                        if (isDragging) {
+                            const newLeft = parseFloat(cardEl.style.left);
+                            const newTop = parseFloat(cardEl.style.top);
+                            cardPositions.set(field.name, {
+                                x: newLeft - CANVAS_CENTER,
+                                y: newTop - CANVAS_CENTER
+                            });
+                            manuallyPositioned.add(field.name);
+                        }
+                        cardEl.style.cursor = 'grab';
+                        cardEl.style.zIndex = '5';
+                        window.removeEventListener('mousemove', onMouseMove);
+                        window.removeEventListener('mouseup', onMouseUp);
+                    };
+
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    initialLeft = parseFloat(cardEl.style.left);
+                    initialTop = parseFloat(cardEl.style.top);
+
+                    window.addEventListener('mousemove', onMouseMove);
+                    window.addEventListener('mouseup', onMouseUp);
+
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+
                 container.appendChild(cardEl);
             });
         }
-        
-        // 为卡片添加拖拽功能
-        function addDragFunctionality(cardEl, fieldName) {
-            let isDragging = false;
-            let startX, startY;
-            let initialLeft, initialTop;
-            
-            cardEl.addEventListener('mousedown', (e) => {
-                // 如果点击的是删除按钮、输入框或其他交互元素，不启动拖拽
-                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-                if (e.target.tagName === 'INPUT' || e.target.closest('input')) return;
-                
-                // 只有点击卡片空白区域才启动拖拽
-                isDragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                
-                initialLeft = parseFloat(cardEl.style.left);
-                initialTop = parseFloat(cardEl.style.top);
-                
-                cardEl.style.cursor = 'grabbing';
-                cardEl.style.zIndex = '10';
-                
-                // 阻止拖拽时的默认行为和冒泡
-                e.preventDefault();
-                e.stopPropagation();
-            });
-            
-            window.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                e.preventDefault();
-                
-                const dx = (e.clientX - startX) / currentScale;
-                const dy = (e.clientY - startY) / currentScale;
-                
-                const newLeft = initialLeft + dx;
-                const newTop = initialTop + dy;
-                
-                cardEl.style.left = newLeft + 'px';
-                cardEl.style.top = newTop + 'px';
-            });
-            
-            window.addEventListener('mouseup', (e) => {
-                if (!isDragging) return;
-                
-                isDragging = false;
-                cardEl.style.cursor = 'grab';
-                cardEl.style.zIndex = '5';
-                
-                // 保存新位置
-                const newLeft = parseFloat(cardEl.style.left);
-                const newTop = parseFloat(cardEl.style.top);
-                cardPositions.set(fieldName, {
-                    x: newLeft - CANVAS_CENTER,
-                    y: newTop - CANVAS_CENTER
-                });
-            });
-        }
+
+        // 重置卡片布局函数（仅清除手动标记，重新自动排列）
         window.resetCardPositions = function() {
             cardPositions.clear();
+            manuallyPositioned.clear();
             renderCanvasCards();
-            showToast({ title: '提示', message: '卡片位置已重置', type: 'INFO', autoClose: 1500 });
         };
 
-        // ============ 导出到剪贴板 ============
+        /**
+         * 对所有节点执行智能自动布局
+         */
+        window.autoLayoutAll = function() {
+            // 清除所有位置记录（包括手动定位的）
+            cardPositions.clear();
+            manuallyPositioned.clear();
+            
+            // 逐个重新计算每个节点的位置
+            addedFields.forEach((field, index) => {
+                const pos = calculateAutoLayoutPosition(field.name, index);
+                cardPositions.set(field.name, pos);
+            });
+            
+            // 重新渲染
+            renderCanvasCards();
+            
+            showToast({ 
+                title: '成功', 
+                message: `已为 ${addedFields.length} 个节点应用自动布局`, 
+                type: 'SUCCESS', 
+                autoClose: 2000 
+            });
+        };
+
+        /**
+         * 进入子类编辑模式
+         */
+        window.enterSubclass = function(fieldName) {
+            const newPath = fieldPath ? `${fieldPath}.${fieldName}` : fieldName;
+            window.location.href = `?project=${encodeURIComponent(projectName)}&path=${encodeURIComponent(newPath)}`;
+        };
+
+        // 导出
         async function exportProjectToClipboard() {
             try {
                 const res = await fetch(`/api/dialog/project-content?projectName=${encodeURIComponent(projectName)}`);
@@ -1089,7 +1296,7 @@
             }
         }
 
-        // ============ Toast 通知系统（从 index.html 移植） ============
+        // Toast
         let toastIdCounter = 0;
         let baseZIndex = 10000;
         const activeToasts = new Map();
@@ -1103,15 +1310,13 @@
                 case 'BOTTOM_LEFT': containerId = 'toastContainerBottomLeft'; break;
                 default: containerId = 'toastContainerTopRight'; break;
             }
-            
+
             const container = document.getElementById(containerId);
             if (!container) return;
-            
+
             const toastId = 'toast-' + (++toastIdCounter);
             const toastEl = document.createElement('div');
-            toastEl.id = toastId;
             toastEl.className = `toast-dialog toast-${toastData.type.toLowerCase()}`;
-            
             toastEl.innerHTML = `
                 <div class="toast-content">
                     <div class="toast-icon"></div>
@@ -1122,28 +1327,23 @@
                     ${toastData.closable !== false ? `<button class="toast-close" onclick="closeToast('${toastId}')">&times;</button>` : ''}
                 </div>
             `;
-            
+
             container.prepend(toastEl);
             baseZIndex++;
-            toastEl.style.zIndex = baseZIndex.toString();
-            
-            requestAnimationFrame(() => {
-                toastEl.classList.add('show');
-            });
-            
+            toastEl.style.zIndex = baseZIndex;
+
+            requestAnimationFrame(() => toastEl.classList.add('show'));
+
             const lifecycle = {
                 element: toastEl,
                 timerId: null,
                 isClosing: false
             };
-            
+
             if (toastData.autoClose > 0) {
                 lifecycle.timerId = setTimeout(() => closeToast(toastId), toastData.autoClose);
                 toastEl.addEventListener('mouseenter', () => {
-                    if (lifecycle.timerId) {
-                        clearTimeout(lifecycle.timerId);
-                        lifecycle.timerId = null;
-                    }
+                    if (lifecycle.timerId) { clearTimeout(lifecycle.timerId); lifecycle.timerId = null; }
                 });
                 toastEl.addEventListener('mouseleave', () => {
                     if (!lifecycle.isClosing && !lifecycle.timerId) {
@@ -1151,7 +1351,7 @@
                     }
                 });
             }
-            
+
             activeToasts.set(toastId, lifecycle);
         }
 
@@ -1160,7 +1360,6 @@
             if (!lifecycle || lifecycle.isClosing) return;
             lifecycle.isClosing = true;
             if (lifecycle.timerId) clearTimeout(lifecycle.timerId);
-            
             const toastEl = lifecycle.element;
             toastEl.classList.add('hide');
             setTimeout(() => {
@@ -1169,185 +1368,107 @@
             }, 300);
         }
 
-        // 辅助函数
         function escapeHtml(unsafe) {
             return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
-        // ============ DOM 元素引用 ============
+        // 画布控制
         const sidebar = document.getElementById('sidebar');
-        const toggleBtn = document.getElementById('sidebarToggleBtn');
-        const overlay = document.getElementById('sidebarOverlay');
         const editorArea = document.getElementById('editorArea');
         const canvasTransform = document.getElementById('canvasTransform');
-        const canvasHint = document.getElementById('canvasHint');
+        // const canvasHint = document.getElementById('canvasHint'); // 已删除提示文本
         const coordIndicator = document.getElementById('coordIndicator');
         const coordX = document.getElementById('coordX');
         const coordY = document.getElementById('coordY');
         const zoomLabel = document.getElementById('zoomLabel');
-        const zoomOutBtn = document.getElementById('zoomOutBtn');
-        const zoomInBtn = document.getElementById('zoomInBtn');
-        const zoomResetBtn = document.getElementById('zoomResetBtn');
 
-        // ============ 状态变量 ============
         let currentTranslateX = 0;
         let currentTranslateY = 0;
         let currentScale = 1;
         const SCALE_MIN = 0.05;
         const SCALE_MAX = 8;
-        const SCALE_STEP = 1.1; // 每次缩放10%
-        const DRAG_THRESHOLD = 3; // 拖动阈值（px），小于此值视为点击
-        const CANVAS_SIZE = 12000; // 画布尺寸
+        const SCALE_STEP = 1.1;
+        const CANVAS_SIZE = 12000;
         const CANVAS_CENTER = CANVAS_SIZE / 2;
 
-        // 拖动状态
-        let isPanning = false;
-        let dragStartMouseX = 0;
-        let dragStartMouseY = 0;
-        let dragStartTranslateX = 0;
-        let dragStartTranslateY = 0;
-        let hasMoved = false;
-
-        // 触摸状态
-        let touchStartDistance = 0;
-        let touchStartScale = 1;
-        let touchStartMidX = 0;
-        let touchStartMidY = 0;
-        let touchStartTranslateX = 0;
-        let touchStartTranslateY = 0;
-        let activeTouches = 0;
-
-        // 坐标指示器计时器
-        let coordTimer = null;
-
-        // ============ 初始化 ============
         function initCanvasView() {
-            // 获取编辑器区域尺寸
             const rect = editorArea.getBoundingClientRect();
-            // 初始视图：将画布中心置于编辑器区域中心
-            const initTx = rect.width / 2 - CANVAS_CENTER;
-            const initTy = rect.height / 2 - CANVAS_CENTER;
-            currentTranslateX = initTx;
-            currentTranslateY = initTy;
+            currentTranslateX = rect.width / 2 - CANVAS_CENTER;
+            currentTranslateY = rect.height / 2 - CANVAS_CENTER;
             currentScale = 1;
             applyTransform();
         }
 
         function applyTransform() {
-            canvasTransform.style.transform =
-                `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
-            updateZoomLabel();
+            canvasTransform.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
+            zoomLabel.textContent = Math.round(currentScale * 100) + '%';
         }
 
-        function updateZoomLabel() {
-            const percentage = Math.round(currentScale * 100);
-            zoomLabel.textContent = percentage + '%';
-        }
-
-        // ============ 坐标指示器 ============
         function showCoordIndicator(canvasX, canvasY) {
             coordX.textContent = Math.round(canvasX);
             coordY.textContent = Math.round(canvasY);
             coordIndicator.classList.add('visible');
-            // 清除之前的计时器
-            if (coordTimer) clearTimeout(coordTimer);
-            coordTimer = setTimeout(() => {
-                coordIndicator.classList.remove('visible');
-            }, 2000);
+            clearTimeout(window.coordTimer);
+            window.coordTimer = setTimeout(() => coordIndicator.classList.remove('visible'), 2000);
         }
 
-        function hideCoordIndicator() {
-            coordIndicator.classList.remove('visible');
-            if (coordTimer) clearTimeout(coordTimer);
-        }
-
-        // ============ 屏幕坐标 → 画布坐标 ============
         function screenToCanvas(screenX, screenY) {
             const rect = editorArea.getBoundingClientRect();
             const sx = screenX - rect.left;
             const sy = screenY - rect.top;
-            const cx = (sx - currentTranslateX) / currentScale;
-            const cy = (sy - currentTranslateY) / currentScale;
-            return { x: cx, y: cy };
+            return { x: (sx - currentTranslateX) / currentScale, y: (sy - currentTranslateY) / currentScale };
         }
 
-        // ============ 应用缩放（以指定屏幕点为中心） ============
         function zoomAtScreenPoint(screenX, screenY, newScale) {
             newScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, newScale));
             if (newScale === currentScale) return;
-
             const rect = editorArea.getBoundingClientRect();
             const sx = screenX - rect.left;
             const sy = screenY - rect.top;
-
-            // 屏幕点对应的画布坐标（缩放前）
             const cx = (sx - currentTranslateX) / currentScale;
             const cy = (sy - currentTranslateY) / currentScale;
-
-            // 新的平移量，使得同一画布坐标保持在屏幕同一位置
             currentTranslateX = sx - cx * newScale;
             currentTranslateY = sy - cy * newScale;
             currentScale = newScale;
-
             applyTransform();
         }
 
-        // ============ 鼠标事件处理 ============
-        editorArea.addEventListener('mousedown', (e) => {
-            // 只响应左键
-            if (e.button !== 0) return;
-            // 如果点击的是缩放控件，不处理
-            if (e.target.closest('.zoom-controls')) return;
-            // 如果点击的是输入框、按钮或其他交互元素，不阻止默认行为
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || 
-                e.target.closest('input') || e.target.closest('button')) {
-                return;
-            }
+        let isPanning = false;
+        let dragStart = { x: 0, y: 0, tx: 0, ty: 0 };
+        let hasMoved = false;
 
+        editorArea.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            if (e.target.closest('.zoom-controls')) return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('input') || e.target.closest('button')) return;
             e.preventDefault();
             isPanning = true;
             hasMoved = false;
-            dragStartMouseX = e.clientX;
-            dragStartMouseY = e.clientY;
-            dragStartTranslateX = currentTranslateX;
-            dragStartTranslateY = currentTranslateY;
+            dragStart = { x: e.clientX, y: e.clientY, tx: currentTranslateX, ty: currentTranslateY };
             editorArea.classList.add('grabbing');
         });
 
         window.addEventListener('mousemove', (e) => {
             if (!isPanning) {
-                // 更新坐标指示器（鼠标悬停时显示画布坐标）
                 const rect = editorArea.getBoundingClientRect();
-                if (
-                    e.clientX >= rect.left &&
-                    e.clientX <= rect.right &&
-                    e.clientY >= rect.top &&
-                    e.clientY <= rect.bottom
-                ) {
-                    const canvasPos = screenToCanvas(e.clientX, e.clientY);
-                    showCoordIndicator(canvasPos.x, canvasPos.y);
-                } else {
-                    hideCoordIndicator();
+                if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    const p = screenToCanvas(e.clientX, e.clientY);
+                    showCoordIndicator(p.x, p.y);
                 }
                 return;
             }
-
-            const dx = e.clientX - dragStartMouseX;
-            const dy = e.clientY - dragStartMouseY;
-
-            if (!hasMoved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+            const dx = e.clientX - dragStart.x;
+            const dy = e.clientY - dragStart.y;
+            if (!hasMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
                 hasMoved = true;
-                // 拖动开始后隐藏提示
-                canvasHint.style.opacity = '0';
+                // canvasHint.style.opacity = '0'; // 已删除提示文本
             }
-
             if (hasMoved) {
-                currentTranslateX = dragStartTranslateX + dx;
-                currentTranslateY = dragStartTranslateY + dy;
+                currentTranslateX = dragStart.tx + dx;
+                currentTranslateY = dragStart.ty + dy;
                 applyTransform();
-                // 更新坐标指示器
-                const canvasPos = screenToCanvas(e.clientX, e.clientY);
-                showCoordIndicator(canvasPos.x, canvasPos.y);
+                const p = screenToCanvas(e.clientX, e.clientY);
+                showCoordIndicator(p.x, p.y);
             }
         });
 
@@ -1355,441 +1476,119 @@
             if (!isPanning) return;
             isPanning = false;
             editorArea.classList.remove('grabbing');
-
-            // 如果没有移动，且是双击，重置视图
-            if (!hasMoved && e.detail === 2) {
-                resetView();
-            }
-
-            // 延迟隐藏坐标指示器
-            if (coordTimer) clearTimeout(coordTimer);
-            coordTimer = setTimeout(() => {
-                coordIndicator.classList.remove('visible');
-            }, 1500);
+            if (!hasMoved && e.detail === 2) resetView();
+            clearTimeout(window.coordTimer);
+            window.coordTimer = setTimeout(() => coordIndicator.classList.remove('visible'), 1500);
         });
 
-        // 滚轮缩放
         editorArea.addEventListener('wheel', (e) => {
             e.preventDefault();
-            const delta = -e.deltaY;
-            // 使用指数缩放，更平滑
-            const factor = delta > 0 ? SCALE_STEP : 1 / SCALE_STEP;
-            const newScale = currentScale * factor;
-            zoomAtScreenPoint(e.clientX, e.clientY, newScale);
-
-            // 更新坐标指示器
-            const canvasPos = screenToCanvas(e.clientX, e.clientY);
-            showCoordIndicator(canvasPos.x, canvasPos.y);
+            const factor = e.deltaY < 0 ? SCALE_STEP : 1 / SCALE_STEP;
+            zoomAtScreenPoint(e.clientX, e.clientY, currentScale * factor);
+            const p = screenToCanvas(e.clientX, e.clientY);
+            showCoordIndicator(p.x, p.y);
         }, { passive: false });
 
-        // 双击重置
-        editorArea.addEventListener('dblclick', (e) => {
-            // 如果点击的是缩放控件，不处理
-            if (e.target.closest('.zoom-controls')) return;
-            // 重置视图已在 mouseup 中通过 e.detail === 2 处理
-            // 这里做备用
-        });
-
-        // ============ 触摸事件处理 ============
-        editorArea.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.zoom-controls')) return;
-
-            activeTouches = e.touches.length;
-
-            if (e.touches.length === 1) {
-                // 单指 - 准备平移
-                const touch = e.touches[0];
-                dragStartMouseX = touch.clientX;
-                dragStartMouseY = touch.clientY;
-                dragStartTranslateX = currentTranslateX;
-                dragStartTranslateY = currentTranslateY;
-                isPanning = true;
-                hasMoved = false;
-            } else if (e.touches.length === 2) {
-                // 双指 - 准备缩放
-                isPanning = false;
-                const t0 = e.touches[0];
-                const t1 = e.touches[1];
-                touchStartDistance = Math.hypot(
-                    t1.clientX - t0.clientX,
-                    t1.clientY - t0.clientY
-                );
-                touchStartScale = currentScale;
-                touchStartMidX = (t0.clientX + t1.clientX) / 2;
-                touchStartMidY = (t0.clientY + t1.clientY) / 2;
-                touchStartTranslateX = currentTranslateX;
-                touchStartTranslateY = currentTranslateY;
+        // 重置视图，并同时重置卡片布局和自动布局
+        function resetView() {
+            const rect = editorArea.getBoundingClientRect();
+            currentTranslateX = rect.width / 2 - CANVAS_CENTER;
+            currentTranslateY = rect.height / 2 - CANVAS_CENTER;
+            currentScale = 1;
+            applyTransform();
+            // canvasHint.style.opacity = '0.7'; // 已删除提示文本
+            coordIndicator.classList.remove('visible');
+            
+            // 重置卡片位置并应用自动布局
+            if (window.autoLayoutAll) {
+                window.autoLayoutAll();
             }
-        }, { passive: false });
+        }
 
-        editorArea.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-
-            if (e.touches.length === 1 && isPanning) {
-                const touch = e.touches[0];
-                const dx = touch.clientX - dragStartMouseX;
-                const dy = touch.clientY - dragStartMouseY;
-
-                if (!hasMoved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
-                    hasMoved = true;
-                    canvasHint.style.opacity = '0';
-                }
-
-                if (hasMoved) {
-                    currentTranslateX = dragStartTranslateX + dx;
-                    currentTranslateY = dragStartTranslateY + dy;
-                    applyTransform();
-                    const canvasPos = screenToCanvas(touch.clientX, touch.clientY);
-                    showCoordIndicator(canvasPos.x, canvasPos.y);
-                }
-            } else if (e.touches.length === 2) {
-                isPanning = false;
-                const t0 = e.touches[0];
-                const t1 = e.touches[1];
-                const currentDistance = Math.hypot(
-                    t1.clientX - t0.clientX,
-                    t1.clientY - t0.clientY
-                );
-                const currentMidX = (t0.clientX + t1.clientX) / 2;
-                const currentMidY = (t0.clientY + t1.clientY) / 2;
-
-                if (touchStartDistance > 0) {
-                    const scaleFactor = currentDistance / touchStartDistance;
-                    const newScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, touchStartScale * scaleFactor));
-
-                    // 以双指中点为缩放中心
-                    const rect = editorArea.getBoundingClientRect();
-                    const sx = touchStartMidX - rect.left;
-                    const sy = touchStartMidY - rect.top;
-                    const cx = (sx - touchStartTranslateX) / touchStartScale;
-                    const cy = (sy - touchStartTranslateY) / touchStartScale;
-
-                    currentScale = newScale;
-                    currentTranslateX = sx - cx * newScale;
-                    currentTranslateY = sy - cy * newScale;
-
-                    // 附加平移（双指中点移动）
-                    const midDx = currentMidX - touchStartMidX;
-                    const midDy = currentMidY - touchStartMidY;
-                    currentTranslateX += midDx;
-                    currentTranslateY += midDy;
-
-                    // 更新基准点
-                    touchStartMidX = currentMidX;
-                    touchStartMidY = currentMidY;
-                    touchStartTranslateX = currentTranslateX;
-                    touchStartTranslateY = currentTranslateY;
-                    touchStartScale = currentScale;
-                    touchStartDistance = currentDistance;
-
-                    applyTransform();
-                    const canvasPos = screenToCanvas(currentMidX, currentMidY);
-                    showCoordIndicator(canvasPos.x, canvasPos.y);
-                    canvasHint.style.opacity = '0';
-                }
-            }
-        }, { passive: false });
-
-        editorArea.addEventListener('touchend', (e) => {
-            if (e.touches.length === 0) {
-                isPanning = false;
-                activeTouches = 0;
-                touchStartDistance = 0;
-                editorArea.classList.remove('grabbing');
-                if (coordTimer) clearTimeout(coordTimer);
-                coordTimer = setTimeout(() => {
-                    coordIndicator.classList.remove('visible');
-                }, 1500);
-            } else if (e.touches.length === 1) {
-                // 从双指变为单指
-                const touch = e.touches[0];
-                dragStartMouseX = touch.clientX;
-                dragStartMouseY = touch.clientY;
-                dragStartTranslateX = currentTranslateX;
-                dragStartTranslateY = currentTranslateY;
-                isPanning = true;
-                hasMoved = false;
-                touchStartDistance = 0;
-            }
-            activeTouches = e.touches.length;
-        });
-
-        // 阻止移动端浏览器的默认手势
-        editorArea.style.touchAction = 'none';
-
-        // ============ 缩放控件按钮 ============
-        zoomInBtn.addEventListener('click', (e) => {
+        // 缩放按钮
+        document.getElementById('zoomInBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             const rect = editorArea.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            zoomAtScreenPoint(centerX, centerY, currentScale * SCALE_STEP);
+            zoomAtScreenPoint(rect.left + rect.width/2, rect.top + rect.height/2, currentScale * SCALE_STEP);
         });
-
-        zoomOutBtn.addEventListener('click', (e) => {
+        document.getElementById('zoomOutBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             const rect = editorArea.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            zoomAtScreenPoint(centerX, centerY, currentScale / SCALE_STEP);
+            zoomAtScreenPoint(rect.left + rect.width/2, rect.top + rect.height/2, currentScale / SCALE_STEP);
         });
-
-        zoomResetBtn.addEventListener('click', (e) => {
+        document.getElementById('zoomResetBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             resetView();
         });
-
         zoomLabel.addEventListener('click', (e) => {
             e.stopPropagation();
             resetView();
         });
 
-        // ============ 重置视图 ============
-        function resetView() {
-            const rect = editorArea.getBoundingClientRect();
-            const initTx = rect.width / 2 - CANVAS_CENTER;
-            const initTy = rect.height / 2 - CANVAS_CENTER;
-            currentTranslateX = initTx;
-            currentTranslateY = initTy;
-            currentScale = 1;
-            applyTransform();
-            canvasHint.style.opacity = '0.7';
-            hideCoordIndicator();
-        }
-
-        // ============ 窗口大小变化时重新计算初始视图 ============
-        let resizeDebounce = null;
-        window.addEventListener('resize', () => {
-            if (resizeDebounce) clearTimeout(resizeDebounce);
-            resizeDebounce = setTimeout(() => {
-                // 如果用户没有手动操作过，重新居中
-                // 这里保持当前视图，不做自动调整
-            }, 250);
-        });
-
-        // ============ 键盘快捷键 ============
+        // 键盘快捷键
         window.addEventListener('keydown', (e) => {
-            // 如果焦点在输入框或其他元素上，不处理
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target
-                .isContentEditable) {
-                return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+            if (e.key === '0') resetView();
+            if ((e.key === '=' || e.key === '+') && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                const rect = editorArea.getBoundingClientRect();
+                zoomAtScreenPoint(rect.left + rect.width/2, rect.top + rect.height/2, currentScale * SCALE_STEP);
             }
-
-            switch (e.key) {
-                case '0':
-                    // 重置缩放
-                    if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-                        resetView();
-                    }
-                    break;
-                case '=':
-                case '+':
-                    // 放大
-                    if (e.ctrlKey || e.metaKey) {
-                        e.preventDefault();
-                        const rect = editorArea.getBoundingClientRect();
-                        const centerX = rect.left + rect.width / 2;
-                        const centerY = rect.top + rect.height / 2;
-                        zoomAtScreenPoint(centerX, centerY, currentScale * SCALE_STEP);
-                    }
-                    break;
-                case '-':
-                    // 缩小
-                    if (e.ctrlKey || e.metaKey) {
-                        e.preventDefault();
-                        const rect = editorArea.getBoundingClientRect();
-                        const centerX = rect.left + rect.width / 2;
-                        const centerY = rect.top + rect.height / 2;
-                        zoomAtScreenPoint(centerX, centerY, currentScale / SCALE_STEP);
-                    }
-                    break;
-                case 'Escape':
-                    // 重置视图
-                    resetView();
-                    break;
-                default:
-                    break;
+            if (e.key === '-' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                const rect = editorArea.getBoundingClientRect();
+                zoomAtScreenPoint(rect.left + rect.width/2, rect.top + rect.height/2, currentScale / SCALE_STEP);
             }
+            if (e.key === 'Escape') resetView();
         });
 
-        // ============ 侧边栏逻辑 ============
-        function isMobileViewport() {
-            return window.matchMedia('(max-width: 768px)').matches;
-        }
-
-        function updateSidebarUI() {
+        // 侧边栏切换
+        window.toggleSidebar = () => {
+            sidebar.classList.toggle('collapsed');
             const collapsed = sidebar.classList.contains('collapsed');
-            toggleBtn.innerHTML = collapsed ? '&gt;' : '&lt;';
-            toggleBtn.setAttribute('aria-label', collapsed ? '展开侧边栏' : '收起侧边栏');
-
-            if (isMobileViewport()) {
-                if (!collapsed) {
-                    overlay.classList.add('visible');
-                } else {
-                    overlay.classList.remove('visible');
-                }
+            document.getElementById('sidebarToggleBtn').innerHTML = collapsed ? '&gt;' : '&lt;';
+            const overlay = document.getElementById('sidebarOverlay');
+            if (window.matchMedia('(max-width: 768px)').matches) {
+                overlay.classList.toggle('visible', !collapsed);
             } else {
                 overlay.classList.remove('visible');
             }
-        }
-
-        window.toggleSidebar = function() {
-            sidebar.classList.toggle('collapsed');
-            updateSidebarUI();
-            // 侧边栏变化后，编辑器区域尺寸可能变化，不需要重置但可以考虑微调
         };
-
-        window.closeSidebarOnMobile = function() {
-            if (isMobileViewport() && !sidebar.classList.contains('collapsed')) {
+        window.closeSidebarOnMobile = () => {
+            if (window.matchMedia('(max-width: 768px)').matches && !sidebar.classList.contains('collapsed')) {
                 sidebar.classList.add('collapsed');
-                updateSidebarUI();
+                document.getElementById('sidebarToggleBtn').innerHTML = '&gt;';
+                document.getElementById('sidebarOverlay').classList.remove('visible');
             }
         };
 
-        // 监听窗口大小变化处理遮罩
-        window.addEventListener('resize', () => {
-            if (!sidebar.classList.contains('collapsed') && !isMobileViewport()) {
-                overlay.classList.remove('visible');
-            }
-            if (!sidebar.classList.contains('collapsed') && isMobileViewport()) {
-                overlay.classList.add('visible');
-            }
-        });
-
-        // ============ 导航功能 ============
-        window.goBack = function() {
-            window.location.href = '/';
-        };
-
-        window.exportProject = function() {
-            console.log('导出项目:', projectName);
-            fetch(`/api/dialog/project-content?projectName=${encodeURIComponent(projectName)}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`服务器错误 (${response.status})`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        const content = data.content;
-                        const blob = new Blob([content], { type: 'application/json' });
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `${projectName}.json`;
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                        document.body.removeChild(a);
-                        console.log('导出成功');
-                    } else {
-                        throw new Error(data.error || '未知错误');
-                    }
-                })
-                .catch(error => {
-                    console.error('导出失败:', error);
-                    alert('导出失败: ' + error.message);
-                });
-        };
-
-        // ============ 页面加载完成 ============
+        window.exportProject = () => { /* 保留兼容 */ };
         window.addEventListener('DOMContentLoaded', () => {
-            console.log('JSON 编辑器页面已加载');
-            console.log('当前项目:', projectName);
-            updateSidebarUI();
             initCanvasView();
-            console.log('画布已初始化，支持拖拽平移和滚轮缩放');
-            
-            // 初始化字段搜索
-            const searchInput = document.getElementById('fieldSearch');
-            if (searchInput) {
-                searchInput.addEventListener('input', () => {
-                    renderFieldList();
-                });
-            }
-            
-            // 初始加载字段数据
+            document.getElementById('fieldSearch').addEventListener('input', renderFieldList);
             fetchFields();
-            
-            // 启动轮询检查后端通知
-            startDialogPolling();
-        });
-        
-        // ============ 轮询检查后端通知 ============
-        function startDialogPolling() {
             setInterval(() => {
-                checkForDialogs();
-            }, 300); // 每 300ms 检查一次
-        }
-        
-        function checkForDialogs() {
-            fetch('/api/dialog/next')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.dialog) {
-                        const dialog = data.dialog;
-                        // 根据 position 决定显示方式
-                        if (dialog.position === 'CENTER') {
-                            // 居中对话框（暂不支持，只显示 Toast）
+                fetch('/api/dialog/next')
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.success && d.dialog) {
                             showToast({
-                                title: dialog.title,
-                                message: dialog.message,
-                                type: dialog.type,
-                                autoClose: dialog.autoClose || 3000
-                            });
-                        } else {
-                            // Toast 通知
-                            showToast({
-                                title: dialog.title,
-                                message: dialog.message,
-                                type: dialog.type,
-                                position: dialog.position,
-                                autoClose: dialog.autoClose || 3000
+                                title: d.dialog.title,
+                                message: d.dialog.message,
+                                type: d.dialog.type,
+                                position: d.dialog.position === 'CENTER' ? 'TOP_RIGHT' : d.dialog.position,
+                                autoClose: d.dialog.autoClose || 3000
                             });
                         }
-                    }
-                })
-                .catch(error => {
-                    // 静默失败，不影响用户体验
-                    console.debug('轮询检查通知失败:', error);
-                });
-        }
+                    })
+                    .catch(() => {});
+            }, 300);
+        });
 
+        // 暴露全局
         window.exportProjectToClipboard = exportProjectToClipboard;
-        window.fetchFields = fetchFields;
-        window.renderFieldList = renderFieldList;
-        window.renderCanvasCards = renderCanvasCards;
-        window.resetCardPositions = resetCardPositions;
-        window.tryExpandSubfields = tryExpandSubfields;
         window.showToast = showToast;
         window.closeToast = closeToast;
-
-        // ============ 暴露API到全局 ============
-        window.editorAPI = {
-            getTransform: () => ({
-                translateX: currentTranslateX,
-                translateY: currentTranslateY,
-                scale: currentScale,
-            }),
-            setTransform: (tx, ty, scale) => {
-                currentTranslateX = tx;
-                currentTranslateY = ty;
-                currentScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, scale));
-                applyTransform();
-            },
-            resetView,
-            zoomAtScreenPoint,
-            screenToCanvas,
-            getCanvasSize: () => CANVAS_SIZE,
-            getCanvasCenter: () => CANVAS_CENTER,
-        };
-
-        console.log('编辑器API已暴露: window.editorAPI');
-        console.log('  - editorAPI.getTransform() 获取当前变换状态');
-        console.log('  - editorAPI.setTransform(tx, ty, scale) 设置变换');
-        console.log('  - editorAPI.resetView() 重置视图');
-        console.log('  - editorAPI.screenToCanvas(sx, sy) 屏幕坐标转画布坐标');
     })();
 </script>
 </body>

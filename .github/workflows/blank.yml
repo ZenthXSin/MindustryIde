@@ -28,14 +28,29 @@ jobs:
       - name: Build mod apk
         run: bash ./gradlew assemble
 
-      - name: List build outputs
-        run: ls -la app/build/outputs/apk/
+      - name: Build tool jar
+        run: bash ./gradlew :tool:jar
 
-      - name: Upload built apk file (Artifact)
+      - name: Build web jar
+        run: bash ./gradlew :web:web:bootJar
+
+      - name: List build outputs
+        run: |
+          echo "=== APK Files ==="
+          ls -la app/build/outputs/apk/
+          echo "\n=== Tool JAR ==="
+          ls -la tool/build/libs/
+          echo "\n=== Web JAR ==="
+          ls -la web/web/build/libs/
+
+      - name: Upload built files (Artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.event.repository.name }}
-          path: app/build/outputs/apk/*.apk
+          name: ${{ github.event.repository.name }}-builds
+          path: |
+            app/build/outputs/apk/*.apk
+            tool/build/libs/tool.jar
+            web/web/build/libs/*.jar
 
       - name: Generate safe tag and release info
         id: release_info
@@ -80,7 +95,10 @@ jobs:
           tag_name: ${{ steps.release_info.outputs.tag_name }}
           name: ${{ steps.release_info.outputs.title }}
           body_path: release_body.md
-          files: app/build/outputs/apk/release/*.apk
+          files: |
+            app/build/outputs/apk/release/*.apk
+            tool/build/libs/*.jar
+            web/web/build/libs/*.jar
           generate_release_notes: true
           prerelease: true
         env:

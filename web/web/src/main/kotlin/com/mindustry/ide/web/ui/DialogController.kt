@@ -285,12 +285,39 @@ class DialogController {
     }
 
     /**
+     * 获取嵌套字段的子字段信息
+     * GET /api/dialog/project/{name}/field-children?path=shoot.inaccuracy
+     */
+    @GetMapping("/project/{projectName}/field-children")
+    fun getFieldChildren(
+        @PathVariable projectName: String,
+        @RequestParam path: String = ""
+    ): Map<String, Any?> {
+        return ProjectManager.getNestedFields(projectName, path)
+    }
+
+    /**
      * 添加字段
      */
     @PostMapping("/project/{projectName}/field")
     fun addField(@PathVariable projectName: String, @RequestBody request: Map<String, String>): Map<String, Any?> {
         val fieldName = request["fieldName"] ?: return mapOf("success" to false, "error" to "缺少 fieldName")
         return ProjectManager.addField(projectName, fieldName)
+    }
+
+    /**
+     * 添加嵌套字段
+     * POST /api/dialog/project/{name}/field-child
+     * Body: { "path": "shoot.inaccuracy", "fieldName": "x" }
+     */
+    @PostMapping("/project/{projectName}/field-child")
+    fun addFieldChild(
+        @PathVariable projectName: String,
+        @RequestBody request: Map<String, String>
+    ): Map<String, Any?> {
+        val path = request["path"] ?: ""
+        val fieldName = request["fieldName"] ?: return mapOf("success" to false, "error" to "缺少 fieldName")
+        return ProjectManager.addNestedField(projectName, path, fieldName)
     }
 
     /**
@@ -304,11 +331,42 @@ class DialogController {
     }
 
     /**
+     * 修改嵌套字段值
+     * PUT /api/dialog/project/{name}/field-child
+     * Body: { "path": "shoot.inaccuracy", "fieldName": "x", "value": "5.0" }
+     */
+    @PutMapping("/project/{projectName}/field-child")
+    fun updateFieldChild(
+        @PathVariable projectName: String,
+        @RequestBody request: Map<String, String>
+    ): Map<String, Any?> {
+        val path = request["path"] ?: ""
+        val fieldName = request["fieldName"] ?: return mapOf("success" to false, "error" to "缺少 fieldName")
+        val value = request["value"] ?: return mapOf("success" to false, "error" to "缺少 value")
+        return ProjectManager.updateNestedFieldValue(projectName, path, fieldName, value)
+    }
+
+    /**
      * 删除字段
      */
     @DeleteMapping("/project/{projectName}/field")
     fun deleteField(@PathVariable projectName: String, @RequestBody request: Map<String, String>): Map<String, Any?> {
         val fieldName = request["fieldName"] ?: return mapOf("success" to false, "error" to "缺少 fieldName")
         return ProjectManager.removeField(projectName, fieldName)
+    }
+
+    /**
+     * 删除嵌套字段
+     * DELETE /api/dialog/project/{name}/field-child
+     * Body: { "path": "shoot.inaccuracy", "fieldName": "x" }
+     */
+    @DeleteMapping("/project/{projectName}/field-child")
+    fun deleteFieldChild(
+        @PathVariable projectName: String,
+        @RequestBody request: Map<String, String>
+    ): Map<String, Any?> {
+        val path = request["path"] ?: ""
+        val fieldName = request["fieldName"] ?: return mapOf("success" to false, "error" to "缺少 fieldName")
+        return ProjectManager.removeNestedField(projectName, path, fieldName)
     }
 }

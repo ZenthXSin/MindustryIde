@@ -96,6 +96,54 @@ object ProjectManager {
         return mapOf("success" to true, "message" to "项目已重命名: $oldName -> $newName")
     }
 
+    /**
+     * 根据点分隔路径解析到目标 ClassBuild
+     * 例: "shoot.inaccuracy" → workFile.classBuild → shoot → inaccuracy
+     */
+    private fun resolvePath(workFile: JsonWorkFile, path: String): ClassBuild {
+        if (path.isEmpty()) return workFile.classBuild
+        
+        val parts = path.split('.')
+        var current: ClassBuild = workFile.classBuild
+        
+        for (part in parts) {
+            // 找到当前层级的字段
+            var fieldBuild = current.fieldBuilds.find { it.field.name == part }
+            
+            // 如果字段不存在，需要先添加它
+            if (fieldBuild == null) {
+                // 查找字段定义
+                val fieldDef = current.getAllFields().find { it.name == part }
+                    ?: throw IllegalArgumentException("字段不存在: $part")
+                
+                // 添加字段并初始化 typeValue
+                current.addFieldBuild(
+                    { first { it.field.name == part } },
+                    { 
+                        // 如果字段是复杂类型，初始化 typeValue
+                        if (!fieldDef.type.isPrimitive && 
+                            !fieldDef.type.simpleName.startsWith("java.lang") &&
+                            fieldDef.type.simpleName !in listOf("String", "Boolean", "Integer", "Float", "Double", "Long", "Short", "Byte", "Character")) {
+                            value.typeValue = ClassBuild(fieldDef.type, Vars.parser)
+                            // 关键修复：将 value 设置为空字符串，这样 toJson() 才会读取 typeValue
+                            value.value = ""
+                        }
+                        this 
+                    }
+                )
+                
+                fieldBuild = current.fieldBuilds.find { it.field.name == part }
+                    ?: throw IllegalArgumentException("字段添加失败: $part")
+            }
+            
+            // 进入下一层
+            current = fieldBuild.value.typeValue
+                ?: throw IllegalArgumentException("字段不是复杂类型或未初始化 typeValue: $part")
+        }
+        
+        return current
+    }
+
     /* ================================================================ */
     /*  字段编辑操作                                                      */
     /* ================================================================ */
@@ -104,53 +152,97 @@ object ProjectManager {
      * 获取项目所有字段信息（包括已添加和未添加）
      */
     fun getProjectFields(projectName: String): Map<String, Any?> {
+        return getNestedFields(projectName, "")
+    }
+
+    /**
+     * 获取嵌套字段的子字段信息
+     * @param path 点分隔的路径，如 "shoot.inaccuracy"，空字符串表示顶层
+     */
+    fun getNestedFields(projectName: String, path: String): Map<String, Any?> {
         val storage = projects[projectName]
             ?: return mapOf("success" to false, "error" to "项目不存在: $projectName")
 
-        val classBuild = storage.workFile.classBuild
-        // 使用简单类名（不含包名）来匹配 fieldDocs 中的键
-        val className = classBuild.classData.simpleName
-        
-        val allFields = classBuild.getAllFields().map { field ->
-            val meta = Vars.parser.fieldDocs[className]?.get(field.name)
-            mapOf(
-                "name" to field.name,
-                "type" to field.type.simpleName,
-                "defaultValue" to (meta?.defaultValue ?: ""),
-                "notes" to (meta?.notes ?: ""),
-                "isRequired" to field.isLikelyRequired()
-            )
-        }
+        return try {
+            val classBuild = if (path.isEmpty()) {
+                storage.workFile.classBuild
+            } else {
+                resolvePath(storage.workFile, path)
+            }
+            
+            // 使用简单类名（不含包名）来匹配 fieldDocs 中的键
+            val className = classBuild.classData.simpleName
+            
+            val allFields = classBuild.getAllFields().map { field ->
+                val meta = Vars.parser.fieldDocs[className]?.get(field.name)
+                // 判断是否为可嵌套的复杂类型：非基本类型且不是 Java 内置包装类
+                val isComplexType = !field.type.isPrimitive && 
+                    !field.type.simpleName.startsWith("java.lang") &&
+                    !field.type.simpleName.endsWith("Seq") &&
+                    field.type.simpleName !in listOf("String", "Boolean", "Integer", "Float", "Double", "Long", "Short", "Byte", "Character")
+                
+                mapOf(
+                    "name" to field.name,
+                    "type" to field.type.simpleName,
+                    "defaultValue" to (meta?.defaultValue ?: ""),
+                    "notes" to (meta?.notes ?: ""),
+                    "isRequired" to field.isLikelyRequired(),
+                    "isComplex" to isComplexType
+                )
+            }
 
-        val addedFields = classBuild.fieldBuilds.map { fb ->
-            mapOf(
-                "name" to fb.field.name,
-                "value" to fb.value.getString(),
-                "type" to fb.classData.simpleName
-            )
-        }
+            val addedFields = classBuild.fieldBuilds.map { fb ->
+                mapOf(
+                    "name" to fb.field.name,
+                    "value" to fb.value.getString(),
+                    "type" to fb.classData.simpleName
+                )
+            }
 
-        return mapOf(
-            "success" to true,
-            "className" to classBuild.name,
-            "allFields" to allFields,
-            "addedFields" to addedFields
-        )
+            mapOf(
+                "success" to true,
+                "className" to classBuild.name,
+                "allFields" to allFields,
+                "addedFields" to addedFields
+            )
+        } catch (e: Exception) {
+            mapOf("success" to false, "error" to e.message)
+        }
     }
 
     /**
      * 添加字段（仅顶级字段）
      */
     fun addField(projectName: String, fieldName: String): Map<String, Any?> {
+        return addNestedField(projectName, "", fieldName)
+    }
+
+    /**
+     * 添加嵌套字段
+     * @param path 点分隔的路径，如 "shoot.inaccuracy"，空字符串表示顶层
+     */
+    fun addNestedField(projectName: String, path: String, fieldName: String): Map<String, Any?> {
         val storage = projects[projectName]
             ?: return mapOf("success" to false, "error" to "项目不存在: $projectName")
 
         return try {
-            storage.tool.addFieldBuild({
-                first { it.field.name == fieldName }
-            })
+            if (path.isEmpty()) {
+                // 顶层字段 - 使用 tool
+                storage.tool.addFieldBuild({
+                    first { it.field.name == fieldName }
+                })
+            } else {
+                // 嵌套字段 - 解析到目标 ClassBuild，然后直接调用 addFieldBuild
+                val targetClass = resolvePath(storage.workFile, path)
+                
+                targetClass.addFieldBuild(
+                    { first { it.field.name == fieldName } },
+                    { this }  // 返回自身，允许后续配置
+                )
+            }
             mapOf("success" to true, "message" to "字段已添加: $fieldName")
         } catch (e: Exception) {
+            e.printStackTrace()
             mapOf("success" to false, "error" to "添加字段失败: ${e.message}")
         }
     }
@@ -159,15 +251,35 @@ object ProjectManager {
      * 修改字段值（仅顶级字段的简单值）
      */
     fun updateFieldValue(projectName: String, fieldName: String, newValue: String): Map<String, Any?> {
+        return updateNestedFieldValue(projectName, "", fieldName, newValue)
+    }
+
+    /**
+     * 修改嵌套字段值
+     * @param path 点分隔的路径，如 "shoot.inaccuracy"，空字符串表示顶层
+     */
+    fun updateNestedFieldValue(projectName: String, path: String, fieldName: String, newValue: String): Map<String, Any?> {
         val storage = projects[projectName]
             ?: return mapOf("success" to false, "error" to "项目不存在: $projectName")
 
         return try {
-            storage.tool.setFieldBuild(fieldName) {
-                value.value = newValue
+            if (path.isEmpty()) {
+                // 顶层字段
+                storage.tool.setFieldBuild(fieldName) {
+                    value.value = newValue
+                }
+            } else {
+                // 嵌套字段
+                val targetClass = resolvePath(storage.workFile, path)
+                
+                val fieldBuild = targetClass.fieldBuilds.find { it.field.name == fieldName }
+                    ?: throw IllegalArgumentException("字段不存在: $fieldName")
+                
+                fieldBuild.value.value = newValue
             }
             mapOf("success" to true, "message" to "字段值已更新: $fieldName = $newValue")
         } catch (e: Exception) {
+            e.printStackTrace()
             mapOf("success" to false, "error" to "更新字段失败: ${e.message}")
         }
     }
@@ -176,15 +288,34 @@ object ProjectManager {
      * 删除字段（仅顶级字段）
      */
     fun removeField(projectName: String, fieldName: String): Map<String, Any?> {
+        return removeNestedField(projectName, "", fieldName)
+    }
+
+    /**
+     * 删除嵌套字段
+     * @param path 点分隔的路径，如 "shoot.inaccuracy"，空字符串表示顶层
+     */
+    fun removeNestedField(projectName: String, path: String, fieldName: String): Map<String, Any?> {
         val storage = projects[projectName]
             ?: return mapOf("success" to false, "error" to "项目不存在: $projectName")
 
         return try {
-            val removed = storage.workFile.classBuild.removeFieldBuild(fieldName)
-            if (removed)
-                mapOf("success" to true, "message" to "字段已删除: $fieldName")
-            else
-                mapOf("success" to false, "error" to "字段不存在: $fieldName")
+            if (path.isEmpty()) {
+                // 顶层字段
+                val removed = storage.workFile.classBuild.removeFieldBuild(fieldName)
+                if (removed)
+                    mapOf("success" to true, "message" to "字段已删除: $fieldName")
+                else
+                    mapOf("success" to false, "error" to "字段不存在: $fieldName")
+            } else {
+                // 嵌套字段
+                val targetClass = resolvePath(storage.workFile, path)
+                val removed = targetClass.removeFieldBuild(fieldName)
+                if (removed)
+                    mapOf("success" to true, "message" to "字段已删除: $fieldName")
+                else
+                    mapOf("success" to false, "error" to "字段不存在: $fieldName")
+            }
         } catch (e: Exception) {
             mapOf("success" to false, "error" to "删除字段失败: ${e.message}")
         }
