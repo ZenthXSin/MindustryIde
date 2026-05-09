@@ -32,7 +32,7 @@ jobs:
         run: bash ./gradlew :tool:jar
 
       - name: Build web jar
-        run: bash ./gradlew :web:web:bootJar
+        run: bash ./web/web/gradlew bootJar
 
       - name: List build outputs
         run: |

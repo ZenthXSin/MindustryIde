@@ -715,6 +715,104 @@
         let allFields = [];
         let addedFields = [];
         let currentClassName = '';  // 当前类名
+        
+        // 自动刷新机制
+        let autoRefreshTimer = null;
+        let lastActivityTime = 0;
+        const AUTO_REFRESH_INTERVAL = 3000; // 3秒
+        
+        // 线性更新队列
+        let updateQueue = [];
+        let isUpdating = false;
+        
+        /**
+         * 将字段加入更新队列
+         */
+        function enqueueFieldUpdate(fieldName) {
+            if (!updateQueue.includes(fieldName)) {
+                updateQueue.push(fieldName);
+            }
+            // 如果定时器未启动，则启动
+            if (!autoRefreshTimer) {
+                startAutoRefresh();
+            }
+        }
+        
+        /**
+         * 执行单个字段的更新
+         */
+        async function updateNextField() {
+            if (isUpdating || updateQueue.length === 0) return;
+            
+            isUpdating = true;
+            const fieldName = updateQueue.shift(); // 取出队列第一个
+            
+            try {
+                // 获取该字段的最新数据
+                let url;
+                if (fieldPath) {
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-child?path=${encodeURIComponent(fieldPath)}&fieldName=${encodeURIComponent(fieldName)}`;
+                } else {
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field?fieldName=${encodeURIComponent(fieldName)}`;
+                }
+                
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                if (data.success && data.field) {
+                    // 更新本地数据
+                    const index = addedFields.findIndex(f => f.name === fieldName);
+                    if (index !== -1) {
+                        addedFields[index] = data.field;
+                    }
+                    
+                    // 重新渲染该字段的卡片
+                    renderCanvasCards();
+                }
+            } catch (err) {
+                console.error(`更新字段 ${fieldName} 失败:`, err);
+            } finally {
+                isUpdating = false;
+            }
+        }
+        
+        /**
+         * 启动自动刷新定时器
+         */
+        function startAutoRefresh() {
+            if (autoRefreshTimer) return; // 已经启动
+            
+            autoRefreshTimer = setInterval(() => {
+                const now = Date.now();
+                // 如果距离上次操作超过3秒，则开始线性更新
+                if (now - lastActivityTime >= AUTO_REFRESH_INTERVAL) {
+                    updateNextField();
+                }
+            }, AUTO_REFRESH_INTERVAL);
+        }
+        
+        /**
+         * 停止自动刷新定时器
+         */
+        function stopAutoRefresh() {
+            if (autoRefreshTimer) {
+                clearInterval(autoRefreshTimer);
+                autoRefreshTimer = null;
+            }
+            updateQueue = []; // 清空队列
+            isUpdating = false;
+        }
+        
+        /**
+         * 记录用户活动，重置计时器
+         */
+        function recordActivity() {
+            lastActivityTime = Date.now();
+            // 如果定时器未启动，则启动
+            if (!autoRefreshTimer) {
+                startAutoRefresh();
+            }
+        }
 
         async function fetchFields() {
             try {
@@ -846,6 +944,7 @@
         }
 
         window.addField = async function(fieldName) {
+            recordActivity(); // 记录活动
             try {
                 let url, body;
 
@@ -867,7 +966,8 @@
                 const data = await res.json();
                 if (data.success) {
                     showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
-                    fetchFields();
+                    // 将字段加入更新队列
+                    enqueueFieldUpdate(fieldName);
                 } else {
                     showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
                 }
@@ -877,6 +977,7 @@
         };
 
         window.updateFieldValue = async function(fieldName, value) {
+            recordActivity(); // 记录活动
             const currentField = addedFields.find(f => f.name === fieldName);
             if (!currentField) return;
 
@@ -904,9 +1005,11 @@
                 const data = await res.json();
                 if (data.success) {
                     showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
-                    fetchFields();
+                    // 将字段加入更新队列
+                    enqueueFieldUpdate(fieldName);
                 } else {
                     showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
+                    // 失败时也刷新以同步状态
                     fetchFields();
                 }
             } catch (err) {
@@ -917,6 +1020,7 @@
 
         window.deleteField = async function(fieldName) {
             if (!confirm(`确定删除字段 ${fieldName}？`)) return;
+            recordActivity(); // 记录活动
             try {
                 let url, body;
 
@@ -938,6 +1042,7 @@
                 const data = await res.json();
                 if (data.success) {
                     showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
+                    // 删除后立即全量刷新（因为字段列表变化了）
                     fetchFields();
                 } else {
                     showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
@@ -1544,6 +1649,10 @@
             initCanvasView();
             document.getElementById('fieldSearch').addEventListener('input', renderFieldList);
             fetchFields();
+            
+            // 启动自动刷新机制
+            startAutoRefresh();
+            
             setInterval(() => {
                 fetch('/api/dialog/next')
                     .then(r => r.json())
@@ -1560,6 +1669,11 @@
                     })
                     .catch(() => {});
             }, 300);
+        });
+        
+        // 页面卸载时停止自动刷新
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
         });
 
         // 暴露全局
