@@ -1,6 +1,6 @@
 # 一个Midnustry mod 编辑器
 
-## [点我查看使用方法](readme/HowToUse)
+## [查看使用方法](readme/HowToUse.md)
 
 
 待办：
