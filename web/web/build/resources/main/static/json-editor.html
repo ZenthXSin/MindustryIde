@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 编辑器 - Mindustry IDE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #2b2d30;
+            --bg-secondary: #3c3f41;
+            --bg-tertiary: #45494a;
+            --accent-blue: #3574f0;
+            --accent-blue-hover: #4a85f5;
+            --text-primary: #a9b7c6;
+            --text-secondary: #808080;
+            --border-color: #555555;
+            --success: #59a869;
+            --error: #ff4444;
+            --sidebar-width: 280px;
+            --navbar-height: 57px;
+            --canvas-bg: #1e1f22;
+            --grid-line-subtle: rgba(255, 255, 255, 0.04);
+            --grid-line-major: rgba(255, 255, 255, 0.07);
+            --grid-dot-color: rgba(255, 255, 255, 0.12);
+            --canvas-origin-marker: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .navbar {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            height: var(--navbar-height);
+            flex-shrink: 0;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .navbar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .navbar-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .navbar-project {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            margin-left: 16px;
+            padding-left: 16px;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .navbar-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .navbar-btn {
+            padding: 6px 16px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .navbar-btn:hover {
+            background-color: var(--bg-tertiary);
+            border-color: var(--text-secondary);
+        }
+
+        .navbar-btn.primary {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .navbar-btn.primary:hover {
+            background-color: var(--accent-blue-hover);
+            border-color: var(--accent-blue-hover);
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - var(--navbar-height));
+            overflow: hidden;
+            position: relative;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            cursor: pointer;
+        }
+        .sidebar-overlay.visible {
+            display: block;
+        }
+
+        .sidebar {
+            position: relative;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            width: fit-content;
+            min-width: 200px;
+            max-width: 500px;
+            transition: width 0.2s ease, min-width 0.2s ease, border 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            z-index: 50;
+            flex-shrink: 0;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            min-width: 0;
+            border-right: none;
+        }
+
+        .sidebar-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 48px;
+            white-space: nowrap;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .sidebar.collapsed .sidebar-header {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: auto;
+            padding: 16px;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            min-width: min-content;
+        }
+
+        .sidebar-content > * {
+            min-width: min-content;
+            white-space: nowrap;
+        }
+
+        #fieldSearch {
+            width: 100%;
+            min-width: 200px;
+        }
+
+        #fieldList {
+            width: 100%;
+            min-width: min-content;
+        }
+
+        .sidebar.collapsed .sidebar-content {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .sidebar-expand-btn {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translate(100%, -50%);
+            width: 32px;
+            height: 48px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0 4px 4px 0;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: background-color 0.15s ease, color 0.15s ease;
+            z-index: 51;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .sidebar-expand-btn:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .editor-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--canvas-bg);
+            cursor: grab;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .editor-area:active {
+            cursor: grabbing;
+        }
+
+        .editor-area.grabbing {
+            cursor: grabbing;
+        }
+
+        .canvas-transform-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 12000px;
+            height: 12000px;
+            transform-origin: 0 0;
+            transform: translate(0px, 0px) scale(1);
+            will-change: transform;
+            background-image:
+                    linear-gradient(to right, var(--grid-line-major) 1px, transparent 1px),
+                    linear-gradient(to bottom, var(--grid-line-major) 1px, transparent 1px),
+                    linear-gradient(to right, var(--grid-line-subtle) 1px, transparent 1px),
+                    linear-gradient(to bottom, var(--grid-line-subtle) 1px, transparent 1px);
+            background-size:
+                    100px 100px,
+                    100px 100px,
+                    20px 20px,
+                    20px 20px;
+            background-position: 0 0, 0 0, 0 0, 0 0;
+        }
+
+        .canvas-origin-marker {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 41px;
+            height: 41px;
+            pointer-events: none;
+            z-index: 2;
+            transform: translate(-20px, -20px);
+        }
+        .canvas-origin-marker::before,
+        .canvas-origin-marker::after {
+            content: '';
+            position: absolute;
+            background-color: var(--canvas-origin-marker);
+        }
+        .canvas-origin-marker::before {
+            left: 0;
+            top: 20px;
+            width: 41px;
+            height: 1px;
+        }
+        .canvas-origin-marker::after {
+            left: 20px;
+            top: 0;
+            width: 1px;
+            height: 41px;
+        }
+
+        .canvas-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .canvas-content>* {
+            pointer-events: auto;
+        }
+
+        .canvas-hint {
+            position: absolute;
+            left: 6000px;
+            top: 6000px;
+            transform: translate(-50%, -50%);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            text-align: center;
+            pointer-events: none;
+            white-space: nowrap;
+            letter-spacing: 0.04em;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .canvas-hint span {
+            display: block;
+            font-size: 0.75rem;
+            opacity: 0.5;
+            margin-top: 6px;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 10;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 4px 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.12s ease, color 0.12s ease;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .zoom-btn:hover {
+            background-color: var(--bg-tertiary);
+            color: #fff;
+        }
+        .zoom-btn:active {
+            background-color: var(--accent-blue);
+            color: #fff;
+        }
+
+        .zoom-label {
+            color: var(--text-primary);
+            font-size: 0.78rem;
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 48px;
+            text-align: center;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: background-color 0.12s ease;
+            letter-spacing: 0.02em;
+        }
+        .zoom-label:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .zoom-divider {
+            width: 1px;
+            height: 20px;
+            background-color: var(--border-color);
+            margin: 0 2px;
+            flex-shrink: 0;
+        }
+
+        .coord-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            pointer-events: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+            letter-spacing: 0.03em;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .coord-indicator.visible {
+            opacity: 1;
+        }
+
+        .coord-indicator span {
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0;
+            }
+
+            .navbar {
+                padding: 12px 16px;
+            }
+
+            .navbar-project {
+                display: none;
+            }
+
+            .sidebar {
+                position: absolute;
+                height: 100%;
+                top: 0;
+                left: 0;
+            }
+
+            .sidebar.collapsed {
+                left: auto;
+            }
+
+            .zoom-controls {
+                bottom: 14px;
+                right: 12px;
+                gap: 2px;
+                padding: 3px 4px;
+                border-radius: 6px;
+            }
+            .zoom-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 1rem;
+                border-radius: 4px;
+            }
+            .zoom-label {
+                font-size: 0.7rem;
+                min-width: 40px;
+                padding: 3px 4px;
+            }
+            .zoom-divider {
+                height: 16px;
+                margin: 0 1px;
+            }
+
+            .coord-indicator {
+                bottom: 14px;
+                left: 10px;
+                font-size: 0.65rem;
+                padding: 4px 8px;
+                border-radius: 4px;
+            }
+
+            .canvas-hint {
+                font-size: 0.8rem;
+            }
+            .canvas-hint span {
+                font-size: 0.65rem;
+            }
+        }
+
+        .toast-container {
+            position: fixed;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            max-width: 420px;
+        }
+
+        .toast-container.top-right {
+            top: 20px;
+            right: 20px;
+        }
+
+        .toast-container.top-left {
+            top: 20px;
+            left: 20px;
+        }
+
+        .toast-container.bottom-right {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .toast-container.bottom-left {
+            bottom: 20px;
+            left: 20px;
+        }
+
+        .toast-dialog {
+            min-width: 280px;
+            max-width: 420px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            padding: 12px 16px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+            transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast-dialog.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast-dialog.hide {
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+            transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toast-icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+        }
+
+        .toast-text {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .toast-message {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+
+        /* IDEA Darcula 风格滚动条 */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+            border-radius: 0;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--bg-primary);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5e6163;
+        }
+
+        ::-webkit-scrollbar-thumb:active {
+            background: #6a6d6f;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: var(--bg-primary);
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">
+        <div>
+            <div class="navbar-title">Mindustry IDE</div>
+        </div>
+        <div class="navbar-project" id="projectName">项目名称</div>
+    </div>
+    <div class="navbar-actions">
+        <button class="navbar-btn" onclick="goBack()">← 返回</button>
+        <button class="navbar-btn primary" onclick="exportProjectToClipboard()">导出</button>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebarOnMobile()"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <button class="sidebar-expand-btn" id="sidebarToggleBtn" onclick="toggleSidebar()">&lt;</button>
+        <div class="sidebar-header">
+            <span class="sidebar-title">字段选择</span>
+        </div>
+        <div class="sidebar-content" id="sidebarContent">
+            <input type="text" id="fieldSearch" placeholder="搜索字段..."
+                   style="width: 100%; padding: 8px; margin-bottom: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-family: 'JetBrains Mono'; border-radius: 4px;">
+            <div id="fieldList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+            <button onclick="refreshFields()" style="width: 100%; margin-top: 12px; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; border-radius: 4px;">刷新</button>
+        </div>
+    </aside>
+
+    <div class="editor-area" id="editorArea">
+        <div class="canvas-transform-layer" id="canvasTransform">
+            <div class="canvas-origin-marker"></div>
+            <div class="canvas-content" id="canvasContent">
+            </div>
+        </div>
+
+        <div class="coord-indicator" id="coordIndicator">
+            画布: <span id="coordX">0</span>, <span id="coordY">0</span>
+        </div>
+
+        <div class="zoom-controls" id="zoomControls">
+            <button class="zoom-btn" id="zoomOutBtn" title="缩小">−</button>
+            <span class="zoom-label" id="zoomLabel" title="点击重置缩放和布局">100%</span>
+            <button class="zoom-btn" id="zoomInBtn" title="放大">+</button>
+            <span class="zoom-divider"></span>
+            <button class="zoom-btn" id="zoomResetBtn" title="重置视图和自动布局">↺</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container top-right" id="toastContainerTopRight"></div>
+<div class="toast-container top-left" id="toastContainerTopLeft"></div>
+<div class="toast-container bottom-right" id="toastContainerBottomRight"></div>
+<div class="toast-container bottom-left" id="toastContainerBottomLeft"></div>
+
+<script>
+    (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectName = urlParams.get('project') || '未命名项目';
+        const fieldPath = urlParams.get('path') || '';  // 嵌套路径，空表示顶层
+        
+        document.getElementById('projectName').textContent = projectName;
+
+        let allFields = [];
+        let addedFields = [];
+        let currentClassName = '';  // 当前类名
+
+        async function fetchFields() {
+            try {
+                let url;
+                if (fieldPath) {
+                    // 子类模式：获取嵌套字段的子字段
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-children?path=${encodeURIComponent(fieldPath)}`;
+                } else {
+                    // 项目模式：获取顶层字段
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/fields`;
+                }
+                
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.success) {
+                    allFields = data.allFields || [];
+                    addedFields = data.addedFields || [];
+                    currentClassName = data.className || '';
+                    renderBreadcrumb();  // 渲染面包屑
+                    renderFieldList();
+                    // 有改动就重新渲染全部节点
+                    renderCanvasCards();
+                } else {
+                    showToast({ title: '错误', message: data.error || '获取字段失败', type: 'ERROR', autoClose: 3000 });
+                }
+            } catch (err) {
+                showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
+            }
+        }
+
+        window.refreshFields = function() {
+            fetchFields();
+            showToast({ title: '提示', message: '正在刷新...', type: 'INFO', autoClose: 1000 });
+        };
+
+        // 渲染面包屑导航
+        function renderBreadcrumb() {
+            const navbarProject = document.getElementById('projectName');
+            
+            if (!fieldPath) {
+                // 项目模式：只显示项目名
+                navbarProject.textContent = projectName;
+            } else {
+                // 子类模式：显示路径
+                const parts = fieldPath.split('.');
+                let html = `<a href="?project=${encodeURIComponent(projectName)}" style="color: var(--text-primary); text-decoration: none;">${projectName}</a>`;
+                
+                let currentPath = '';
+                parts.forEach((part, index) => {
+                    currentPath += (index > 0 ? '.' : '') + part;
+                    if (index === parts.length - 1) {
+                        // 最后一级显示为粗体（当前层级）
+                        html += ` > <strong>${part}</strong>`;
+                    } else {
+                        // 中间层级可以点击跳转到对应位置
+                        html += ` > <a href="?project=${encodeURIComponent(projectName)}&path=${encodeURIComponent(currentPath)}" style="color: var(--accent-blue); text-decoration: none; cursor: pointer;">${part}</a>`;
+                    }
+                });
+                
+                navbarProject.innerHTML = html;
+            }
+        }
+
+        /**
+         * 返回功能：如果有上一级就返回上一级，否则返回主页
+         */
+        window.goBack = function() {
+            // 从 URL 重新获取参数，确保获取最新值
+            const currentParams = new URLSearchParams(window.location.search);
+            const currentProject = currentParams.get('project') || '未命名项目';
+            const currentFieldPath = currentParams.get('path') || '';
+            
+            if (!currentFieldPath) {
+                // 没有路径，已经在顶层，返回首页
+                window.location.href = '/';
+                return;
+            }
+            
+            const parts = currentFieldPath.split('.');
+            if (parts.length === 1) {
+                // 只有一层路径，返回项目主页
+                window.location.href = `?project=${encodeURIComponent(currentProject)}`;
+            } else {
+                // 多层路径，返回上一级
+                const parentParts = parts.slice(0, -1);
+                const parentPath = parentParts.join('.');
+                window.location.href = `?project=${encodeURIComponent(currentProject)}&path=${encodeURIComponent(parentPath)}`;
+            }
+        };
+
+        function renderFieldList() {
+            const container = document.getElementById('fieldList');
+            const searchTerm = document.getElementById('fieldSearch').value.toLowerCase();
+            let html = '';
+
+            const addedNames = new Set(addedFields.map(f => f.name));
+
+            allFields.forEach(field => {
+                if (searchTerm && !field.name.toLowerCase().includes(searchTerm)) return;
+
+                const isAdded = addedNames.has(field.name);
+                const isComplex = field.isComplex === true; // 使用后端返回的 isComplex 字段
+
+                html += `
+                    <div style="padding: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; min-width: min-content;">
+                        <div style="display: flex; justify-content: space-between; gap: 8px; min-width: min-content;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                    <span style="font-weight: 600;">${field.name}</span>
+                                    <span style="font-size: 0.7rem; background: var(--bg-secondary); padding: 1px 6px; border-radius: 3px;">${field.type}</span>
+                                    ${field.isRequired ? '<span style="color: orange;">*</span>' : ''}
+                                    ${isAdded ? '<span style="color: var(--success);">●</span>' : ''}
+                                </div>
+                                ${field.notes ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; white-space: normal;">📖 ${escapeHtml(field.notes)}</div>` : ''}
+                                ${field.defaultValue && field.defaultValue !== 'null' ? `<div style="font-size: 0.75rem; color: var(--text-secondary); white-space: normal;">📝 ${escapeHtml(field.defaultValue)}</div>` : ''}
+                            </div>
+                            <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                                ${isAdded ? `
+                                    <button onclick="deleteField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--error); border: none; color: white; border-radius: 3px;">×</button>
+                                ` : `
+                                    <button onclick="addField('${field.name}')" style="padding: 2px 6px; font-size: 0.7rem; background: var(--success); border: none; color: white; border-radius: 3px;">+</button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html || '<div style="color: var(--text-secondary); text-align: center; padding: 16px;">无匹配字段</div>';
+        }
+
+        window.addField = async function(fieldName) {
+            try {
+                let url, body;
+                
+                if (fieldPath) {
+                    // 子类模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-child`;
+                    body = JSON.stringify({ path: fieldPath, fieldName });
+                } else {
+                    // 项目模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field`;
+                    body = JSON.stringify({ fieldName });
+                }
+                
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
+                    // 字段添加后，重新获取数据并渲染全部节点
+                    fetchFields();
+                } else {
+                    showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
+                }
+            } catch (err) {
+                showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
+            }
+        };
+
+        window.updateFieldValue = async function(fieldName, value) {
+            const currentField = addedFields.find(f => f.name === fieldName);
+            if (!currentField) return;
+
+            const oldValue = parseFieldValue(currentField.value, currentField.type);
+            if (oldValue === value) return;
+
+            try {
+                let url, body;
+                
+                if (fieldPath) {
+                    // 子类模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-child`;
+                    body = JSON.stringify({ path: fieldPath, fieldName, value });
+                } else {
+                    // 项目模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field`;
+                    body = JSON.stringify({ fieldName, value });
+                }
+                
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
+                    // 字段更新后，重新获取数据并渲染全部节点
+                    fetchFields();
+                } else {
+                    showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
+                    // 即使失败也刷新数据
+                    fetchFields();
+                }
+            } catch (err) {
+                showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
+                // 网络错误也要刷新
+                fetchFields();
+            }
+        };
+
+        window.deleteField = async function(fieldName) {
+            if (!confirm(`确定删除字段 ${fieldName}？`)) return;
+            try {
+                let url, body;
+                
+                if (fieldPath) {
+                    // 子类模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field-child`;
+                    body = JSON.stringify({ path: fieldPath, fieldName });
+                } else {
+                    // 项目模式
+                    url = `/api/dialog/project/${encodeURIComponent(projectName)}/field`;
+                    body = JSON.stringify({ fieldName });
+                }
+                
+                const res = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
+                    // 字段删除后，重新获取数据并渲染全部节点
+                    fetchFields();
+                } else {
+                    showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
+                }
+            } catch (err) {
+                showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
+            }
+        };
+
+        function parseFieldValue(value, fieldType) {
+            if (!value || value === 'null' || value === '') return '';
+            try {
+                const parsed = JSON.parse(value);
+                if (fieldType === 'String' && typeof parsed === 'object' && parsed.value !== undefined) return parsed.value;
+                if (typeof parsed === 'object' && parsed.value !== undefined) return String(parsed.value);
+                if (typeof parsed === 'object') return JSON.stringify(parsed).substring(0, 50) + (JSON.stringify(parsed).length > 50 ? '...' : '');
+                return String(parsed);
+            } catch (e) {
+                return value;
+            }
+        }
+
+        // 自动布局系统
+        let cardPositions = new Map();
+        let manuallyPositioned = new Set();
+
+        /**
+         * 力导向布局算法 - 为新节点找到最佳位置
+         * @param {string} fieldName - 新字段名称
+         * @param {number} totalCards - 当前卡片总数
+         * @returns {{x: number, y: number}} - 推荐的坐标位置
+         */
+        function calculateAutoLayoutPosition(fieldName, totalCards) {
+            const cardWidth = 260;
+            const cardHeight = 80;
+            const spacingX = 30;  // 水平间距
+            const spacingY = 25;  // 垂直间距
+            
+            // 如果没有其他卡片，放在中心
+            if (totalCards === 0) {
+                return { x: 0, y: 0 };
+            }
+
+            // 收集所有现有卡片的位置和尺寸
+            const existingNodes = [];
+            cardPositions.forEach((pos, name) => {
+                if (name !== fieldName) {
+                    existingNodes.push({
+                        x: pos.x,
+                        y: pos.y,
+                        width: cardWidth,
+                        height: cardHeight
+                    });
+                }
+            });
+
+            // 策略1：尝试在右侧或下方找到空隙
+            const candidatePositions = generateCandidatePositions(existingNodes, cardWidth, cardHeight, spacingX, spacingY);
+            
+            // 评估每个候选位置的得分（考虑重叠、距离等）
+            let bestPosition = null;
+            let bestScore = Infinity;
+
+            for (const candidate of candidatePositions) {
+                const score = evaluatePosition(candidate, existingNodes, cardWidth, cardHeight);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestPosition = candidate;
+                }
+            }
+
+            // 如果找到了合适的位置，返回它
+            if (bestPosition) {
+                return bestPosition;
+            }
+
+            // 策略2：网格扩展（后备方案）
+            return fallbackGridLayout(totalCards, cardWidth, cardHeight, spacingX, spacingY);
+        }
+
+        /**
+         * 生成候选位置列表
+         */
+        function generateCandidatePositions(nodes, cardWidth, cardHeight, spacingX, spacingY) {
+            const candidates = [];
+            const margin = 50; // 边界留白
+
+            // 在每个现有节点的四周生成候选位置
+            nodes.forEach(node => {
+                // 右侧
+                candidates.push({ x: node.x + node.width + spacingX, y: node.y });
+                // 左侧
+                candidates.push({ x: node.x - cardWidth - spacingX, y: node.y });
+                // 下方
+                candidates.push({ x: node.x, y: node.y + node.height + spacingY });
+                // 上方
+                candidates.push({ x: node.x, y: node.y - cardHeight - spacingY });
+                // 右下角
+                candidates.push({ x: node.x + node.width + spacingX, y: node.y + node.height + spacingY });
+                // 左下角
+                candidates.push({ x: node.x - cardWidth - spacingX, y: node.y + node.height + spacingY });
+            });
+
+            // 添加从原点向外扩展的环形位置
+            const rings = 3;
+            for (let ring = 1; ring <= rings; ring++) {
+                const radius = ring * (cardWidth + spacingX);
+                const pointsPerRing = Math.max(8, ring * 4);
+                for (let i = 0; i < pointsPerRing; i++) {
+                    const angle = (i / pointsPerRing) * Math.PI * 2;
+                    candidates.push({
+                        x: Math.cos(angle) * radius - cardWidth / 2,
+                        y: Math.sin(angle) * radius - cardHeight / 2
+                    });
+                }
+            }
+
+            return candidates;
+        }
+
+        /**
+         * 评估位置的得分（越低越好）
+         */
+        function evaluatePosition(candidate, nodes, cardWidth, cardHeight) {
+            let score = 0;
+            const minDistance = 20; // 最小允许距离
+
+            // 检查与所有现有节点的重叠和距离
+            nodes.forEach(node => {
+                const dx = Math.abs(candidate.x - node.x);
+                const dy = Math.abs(candidate.y - node.y);
+                
+                // 计算实际距离
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // 如果重叠，给予极高惩罚
+                if (dx < (cardWidth + minDistance) && dy < (cardHeight + minDistance)) {
+                    score += 10000;
+                }
+                
+                // 距离越近，惩罚越大（反比关系）
+                if (distance > 0) {
+                    score += 1000 / distance;
+                }
+            });
+
+            // 偏好靠近中心的区域（避免过于分散）
+            const distanceFromCenter = Math.sqrt(candidate.x * candidate.x + candidate.y * candidate.y);
+            score += distanceFromCenter * 0.1;
+
+            return score;
+        }
+
+        /**
+         * 后备的网格布局算法
+         */
+        function fallbackGridLayout(totalCards, cardWidth, cardHeight, spacingX, spacingY) {
+            const maxCols = Math.floor(Math.min(5, Math.sqrt(totalCards + 1) * 1.3));
+            const cols = Math.max(1, maxCols);
+            const index = totalCards; // 新卡片的索引
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            
+            const gridWidth = cols * (cardWidth + spacingX);
+            const startX = -gridWidth / 2 + cardWidth / 2;
+            const startY = -(row * (cardHeight + spacingY)) / 2;
+            
+            return {
+                x: startX + col * (cardWidth + spacingX),
+                y: startY + row * (cardHeight + spacingY)
+            };
+        }
+
+        /**
+         * 获取画布卡片位置（整合自动布局）
+         */
+        function getCanvasCardPosition(index, total) {
+            const cardWidth = 260;
+            const cardHeight = 80;
+            const maxCols = Math.floor(Math.min(4, Math.sqrt(total) * 1.2));
+            const cols = Math.max(1, maxCols);
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            const gridWidth = cols * cardWidth;
+            const startX = -gridWidth / 2 + cardWidth / 2;
+            const startY = -cardHeight / 2;
+            return { x: startX + col * cardWidth, y: startY + row * cardHeight };
+        }
+
+        /**
+         * 节点渲染函数 - 有改动就重新渲染全部
+         * 每次调用都会清空画布并重新创建所有节点
+         */
+        function renderCanvasCards() {
+            // 清空画布上的所有节点
+            const oldCards = document.querySelectorAll('.field-card-canvas');
+            oldCards.forEach(card => card.remove());
+
+            const container = document.getElementById('canvasContent');
+            const total = addedFields.length;
+
+            // 重新渲染所有节点（包括位置、值、状态等）
+            addedFields.forEach((field, index) => {
+                let pos;
+                
+                // 如果用户手动定位过，使用手动位置
+                if (cardPositions.has(field.name) && manuallyPositioned.has(field.name)) {
+                    pos = cardPositions.get(field.name);
+                } else if (cardPositions.has(field.name)) {
+                    // 已有自动计算的位置，直接使用
+                    pos = cardPositions.get(field.name);
+                } else {
+                    // 新节点：使用智能自动布局算法
+                    pos = calculateAutoLayoutPosition(field.name, total);
+                    cardPositions.set(field.name, pos);
+                }
+
+                // 从 allFields 中查找该字段的完整信息（包括 isComplex）
+                const fieldInfo = allFields.find(f => f.name === field.name);
+                const isComplex = fieldInfo ? fieldInfo.isComplex === true : false;
+                const displayValue = parseFieldValue(field.value, field.type);
+
+                const cardEl = document.createElement('div');
+                cardEl.className = 'field-card-canvas';
+                cardEl.style.cssText = `
+                    position: absolute;
+                    left: ${CANVAS_CENTER + pos.x}px;
+                    top: ${CANVAS_CENTER + pos.y}px;
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--accent-blue);
+                    border-radius: 6px;
+                    padding: 10px 12px;
+                    min-width: 220px;
+                    max-width: 320px;
+                    cursor: grab;
+                    user-select: none;
+                    font-size: 0.8rem;
+                    z-index: 5;
+                `;
+
+                cardEl.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-weight: 600; color: var(--accent-blue);">${field.name}</span>
+                            <span style="color: var(--text-secondary); margin-left: 8px; font-size: 0.7rem;">${field.type}</span>
+                        </div>
+                        <button onclick="event.stopPropagation(); deleteField('${field.name}')"
+                            style="background: transparent; border: none; color: var(--error); cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 0 4px;">&times;</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary);">值:</label>
+                        <input type="text"
+                            id="canvas-input-${field.name}"
+                            value="${escapeHtml(displayValue)}"
+                            placeholder="输入值..."
+                            style="flex: 1; min-width: 0; padding: 4px 8px; font-size: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 3px; color: var(--text-primary); outline: none;"
+                            onfocus="this.style.borderColor='var(--accent-blue)'"
+                            onblur="this.style.borderColor='var(--border-color)'"
+                            onkeydown="if(event.key==='Enter') { event.stopPropagation(); updateFieldValue('${field.name}', this.value); this.blur(); }"
+                            onchange="updateFieldValue('${field.name}', this.value)"
+                        />
+                    </div>
+                    ${isComplex ? `
+                        <button onclick="event.stopPropagation(); enterSubclass('${field.name}')" 
+                                style="margin-top: 6px; width: 100%; padding: 4px; background: var(--accent-blue); border: none; color: white; border-radius: 3px; cursor: pointer; font-size: 0.75rem;">
+                            → 编辑子字段
+                        </button>
+                    ` : ''}
+                `;
+
+                cardEl.addEventListener('mousedown', (e) => {
+                    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                    if (e.target.tagName === 'INPUT' || e.target.closest('input')) return;
+
+                    let isDragging = false;
+                    let startX, startY, initialLeft, initialTop;
+
+                    const onMouseMove = (ev) => {
+                        if (!isDragging) {
+                            isDragging = true;
+                            cardEl.style.cursor = 'grabbing';
+                            cardEl.style.zIndex = '10';
+                        }
+                        const dx = (ev.clientX - startX) / currentScale;
+                        const dy = (ev.clientY - startY) / currentScale;
+                        cardEl.style.left = (initialLeft + dx) + 'px';
+                        cardEl.style.top = (initialTop + dy) + 'px';
+                    };
+
+                    const onMouseUp = () => {
+                        if (isDragging) {
+                            const newLeft = parseFloat(cardEl.style.left);
+                            const newTop = parseFloat(cardEl.style.top);
+                            cardPositions.set(field.name, {
+                                x: newLeft - CANVAS_CENTER,
+                                y: newTop - CANVAS_CENTER
+                            });
+                            manuallyPositioned.add(field.name);
+                        }
+                        cardEl.style.cursor = 'grab';
+                        cardEl.style.zIndex = '5';
+                        window.removeEventListener('mousemove', onMouseMove);
+                        window.removeEventListener('mouseup', onMouseUp);
+                    };
+
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    initialLeft = parseFloat(cardEl.style.left);
+                    initialTop = parseFloat(cardEl.style.top);
+
+                    window.addEventListener('mousemove', onMouseMove);
+                    window.addEventListener('mouseup', onMouseUp);
+
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+
+                container.appendChild(cardEl);
+            });
+        }
+
+        // 重置卡片布局函数（仅清除手动标记，重新自动排列）
+        window.resetCardPositions = function() {
+            cardPositions.clear();
+            manuallyPositioned.clear();
+            renderCanvasCards();
+        };
+
+        /**
+         * 对所有节点执行智能自动布局
+         */
+        window.autoLayoutAll = function() {
+            // 清除所有位置记录（包括手动定位的）
+            cardPositions.clear();
+            manuallyPositioned.clear();
+            
+            // 逐个重新计算每个节点的位置
+            addedFields.forEach((field, index) => {
+                const pos = calculateAutoLayoutPosition(field.name, index);
+                cardPositions.set(field.name, pos);
+            });
+            
+            // 重新渲染
+            renderCanvasCards();
+            
+            showToast({ 
+                title: '成功', 
+                message: `已为 ${addedFields.length} 个节点应用自动布局`, 
+                type: 'SUCCESS', 
+                autoClose: 2000 
+            });
+        };
+
+        /**
+         * 进入子类编辑模式
+         */
+        window.enterSubclass = function(fieldName) {
+            const newPath = fieldPath ? `${fieldPath}.${fieldName}` : fieldName;
+            window.location.href = `?project=${encodeURIComponent(projectName)}&path=${encodeURIComponent(newPath)}`;
+        };
+
+        // 导出
+        async function exportProjectToClipboard() {
+            try {
+                const res = await fetch(`/api/dialog/project-content?projectName=${encodeURIComponent(projectName)}`);
+                const data = await res.json();
+                if (data.success) {
+                    await navigator.clipboard.writeText(data.content);
+                    showToast({ title: '成功', message: 'JSON 已复制到剪贴板', type: 'SUCCESS', autoClose: 2000 });
+                } else {
+                    throw new Error(data.error || '未知错误');
+                }
+            } catch (err) {
+                showToast({ title: '错误', message: '导出失败: ' + err.message, type: 'ERROR', autoClose: 3000 });
+            }
+        }
+
+        // Toast
+        let toastIdCounter = 0;
+        let baseZIndex = 10000;
+        const activeToasts = new Map();
+
+        function showToast(toastData) {
+            const position = toastData.position || 'TOP_RIGHT';
+            let containerId;
+            switch(position) {
+                case 'TOP_LEFT': containerId = 'toastContainerTopLeft'; break;
+                case 'BOTTOM_RIGHT': containerId = 'toastContainerBottomRight'; break;
+                case 'BOTTOM_LEFT': containerId = 'toastContainerBottomLeft'; break;
+                default: containerId = 'toastContainerTopRight'; break;
+            }
+
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const toastId = 'toast-' + (++toastIdCounter);
+            const toastEl = document.createElement('div');
+            toastEl.className = `toast-dialog toast-${toastData.type.toLowerCase()}`;
+            toastEl.innerHTML = `
+                <div class="toast-content">
+                    <div class="toast-icon"></div>
+                    <div class="toast-text">
+                        <div class="toast-title">${toastData.title}</div>
+                        <div class="toast-message">${toastData.message}</div>
+                    </div>
+                    ${toastData.closable !== false ? `<button class="toast-close" onclick="closeToast('${toastId}')">&times;</button>` : ''}
+                </div>
+            `;
+
+            container.prepend(toastEl);
+            baseZIndex++;
+            toastEl.style.zIndex = baseZIndex;
+
+            requestAnimationFrame(() => toastEl.classList.add('show'));
+
+            const lifecycle = {
+                element: toastEl,
+                timerId: null,
+                isClosing: false
+            };
+
+            if (toastData.autoClose > 0) {
+                lifecycle.timerId = setTimeout(() => closeToast(toastId), toastData.autoClose);
+                toastEl.addEventListener('mouseenter', () => {
+                    if (lifecycle.timerId) { clearTimeout(lifecycle.timerId); lifecycle.timerId = null; }
+                });
+                toastEl.addEventListener('mouseleave', () => {
+                    if (!lifecycle.isClosing && !lifecycle.timerId) {
+                        lifecycle.timerId = setTimeout(() => closeToast(toastId), toastData.autoClose);
+                    }
+                });
+            }
+
+            activeToasts.set(toastId, lifecycle);
+        }
+
+        function closeToast(toastId) {
+            const lifecycle = activeToasts.get(toastId);
+            if (!lifecycle || lifecycle.isClosing) return;
+            lifecycle.isClosing = true;
+            if (lifecycle.timerId) clearTimeout(lifecycle.timerId);
+            const toastEl = lifecycle.element;
+            toastEl.classList.add('hide');
+            setTimeout(() => {
+                if (toastEl.parentNode) toastEl.parentNode.removeChild(toastEl);
+                activeToasts.delete(toastId);
+            }, 300);
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // 画布控制
+        const sidebar = document.getElementById('sidebar');
+        const editorArea = document.getElementById('editorArea');
+        const canvasTransform = document.getElementById('canvasTransform');
+        const canvasHint = document.getElementById('canvasHint');
+        const coordIndicator = document.getElementById('coordIndicator');
+        const coordX = document.getElementById('coordX');
+        const coordY = document.getElementById('coordY');
+        const zoomLabel = document.getElementById('zoomLabel');
+
+        let currentTranslateX = 0;
+        let currentTranslateY = 0;
+        let currentScale = 1;
+        const SCALE_MIN = 0.05;
+        const SCALE_MAX = 8;
+        const SCALE_STEP = 1.1;
+        const CANVAS_SIZE = 12000;
+        const CANVAS_CENTER = CANVAS_SIZE / 2;
+
+        function initCanvasView() {
+            const rect = editorArea.getBoundingClientRect();
+            currentTranslateX = rect.width / 2 - CANVAS_CENTER;
+            currentTranslateY = rect.height / 2 - CANVAS_CENTER;
+            currentScale = 1;
+            applyTransform();
+        }
+
+        function applyTransform() {
+            canvasTransform.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
+            zoomLabel.textContent = Math.round(currentScale * 100) + '%';
+        }
+
+        function showCoordIndicator(canvasX, canvasY) {
+            coordX.textContent = Math.round(canvasX);
+            coordY.textContent = Math.round(canvasY);
+            coordIndicator.classList.add('visible');
+            clearTimeout(window.coordTimer);
+            window.coordTimer = setTimeout(() => coordIndicator.classList.remove('visible'), 2000);
+        }
+
+        function screenToCanvas(screenX, screenY) {
+            const rect = editorArea.getBoundingClientRect();
+            const sx = screenX - rect.left;
+            const sy = screenY - rect.top;
+            return { x: (sx - currentTranslateX) / currentScale, y: (sy - currentTranslateY) / currentScale };
+        }
+
+        function zoomAtScreenPoint(screenX, screenY, newScale) {
+            newScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, newScale));
+            if (newScale === currentScale) return;
+            const rect = editorArea.getBoundingClientRect();
+            const sx = screenX - rect.left;
+            const sy = screenY - rect.top;
+            const cx = (sx - currentTranslateX) / currentScale;
+            const cy = (sy - currentTranslateY) / currentScale;
+            currentTranslateX = sx - cx * newScale;
+            currentTranslateY = sy - cy * newScale;
+            currentScale = newScale;
+            applyTransform();
+        }
+
+        let isPanning = false;
+        let dragStart = { x: 0, y: 0, tx: 0, ty: 0 };
+        let hasMoved = false;
+
+        editorArea.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            if (e.target.closest('.zoom-controls')) return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('input') || e.target.closest('button')) return;
+            e.preventDefault();
+            isPanning = true;
+            hasMoved = false;
+            dragStart = { x: e.clientX, y: e.clientY, tx: currentTranslateX, ty: currentTranslateY };
+            editorArea.classList.add('grabbing');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isPanning) {
+                const rect = editorArea.getBoundingClientRect();
+                if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    const p = screenToCanvas(e.clientX, e.clientY);
+                    showCoordIndicator(p.x, p.y);
+                }
+                return;
+            }
+            const dx = e.clientX - dragStart.x;
+            const dy = e.clientY - dragStart.y;
+            if (!hasMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+                hasMoved = true;
+                canvasHint.style.opacity = '0';
+            }
+            if (hasMoved) {
+                currentTranslateX = dragStart.tx + dx;
+                currentTranslateY = dragStart.ty + dy;
+                applyTransform();
+                const p = screenToCanvas(e.clientX, e.clientY);
+                showCoordIndicator(p.x, p.y);
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (!isPanning) return;
+            isPanning = false;
+            editorArea.classList.remove('grabbing');
+            if (!hasMoved && e.detail === 2) resetView();
+            clearTimeout(window.coordTimer);
+            window.coordTimer = setTimeout(() => coordIndicator.classList.remove('visible'), 1500);
+        });
+
+        editorArea.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const factor = e.deltaY < 0 ? SCALE_STEP : 1 / SCALE_STEP;
+            zoomAtScreenPoint(e.clientX, e.clientY, currentScale * factor);
+            const p = screenToCanvas(e.clientX, e.clientY);
+            showCoordIndicator(p.x, p.y);
+        }, { passive: false });
+
+        // 重置视图，并同时重置卡片布局和自动布局
+        function resetView() {
+            const rect = editorArea.getBoundingClientRect();
+            currentTranslateX = rect.width / 2 - CANVAS_CENTER;
+            currentTranslateY = rect.height / 2 - CANVAS_CENTER;
+            currentScale = 1;
+            applyTransform();
+            canvasHint.style.opacity = '0.7';
+            coordIndicator.classList.remove('visible');
+            
+            // 重置卡片位置并应用自动布局
+            if (window.autoLayoutAll) {
+                window.autoLayoutAll();
+            }
+        }
+
+        // 缩放按钮
+        document.getElementById('zoomInBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const rect = editorArea.getBoundingClientRect();
+            zoomAtScreenPoint(rect.left + rect.width/2, rect.top + rect.height/2, currentScale * SCALE_STEP);
+        });
+        document.getElementById('zoomOutBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const rect = editorArea.getBoundingClientRect();
+            zoomAtScreenPoint(rect.left + rect.width/2, rect.top + rect.height/2, currentScale / SCALE_STEP);
+        });
+        document.getElementById('zoomResetBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetView();
+        });
+        zoomLabel.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetView();
+        });
+
+        // 键盘快捷键
+        window.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+            if (e.key === '0') resetView();
+            if ((e.key === '=' || e.key === '+') && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                const rect = editorArea.getBoundingClientRect();
+                zoomAtScreenPoint(rect.left + rect.width/2, rect.top + rect.height/2, currentScale * SCALE_STEP);
+            }
+            if (e.key === '-' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                const rect = editorArea.getBoundingClientRect();
+                zoomAtScreenPoint(rect.left + rect.width/2, rect.top + rect.height/2, currentScale / SCALE_STEP);
+            }
+            if (e.key === 'Escape') resetView();
+        });
+
+        // 侧边栏切换
+        window.toggleSidebar = () => {
+            sidebar.classList.toggle('collapsed');
+            const collapsed = sidebar.classList.contains('collapsed');
+            document.getElementById('sidebarToggleBtn').innerHTML = collapsed ? '&gt;' : '&lt;';
+            const overlay = document.getElementById('sidebarOverlay');
+            if (window.matchMedia('(max-width: 768px)').matches) {
+                overlay.classList.toggle('visible', !collapsed);
+            } else {
+                overlay.classList.remove('visible');
+            }
+        };
+        window.closeSidebarOnMobile = () => {
+            if (window.matchMedia('(max-width: 768px)').matches && !sidebar.classList.contains('collapsed')) {
+                sidebar.classList.add('collapsed');
+                document.getElementById('sidebarToggleBtn').innerHTML = '&gt;';
+                document.getElementById('sidebarOverlay').classList.remove('visible');
+            }
+        };
+
+        window.exportProject = () => { /* 保留兼容 */ };
+        window.addEventListener('DOMContentLoaded', () => {
+            initCanvasView();
+            document.getElementById('fieldSearch').addEventListener('input', renderFieldList);
+            fetchFields();
+            setInterval(() => {
+                fetch('/api/dialog/next')
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.success && d.dialog) {
+                            showToast({
+                                title: d.dialog.title,
+                                message: d.dialog.message,
+                                type: d.dialog.type,
+                                position: d.dialog.position === 'CENTER' ? 'TOP_RIGHT' : d.dialog.position,
+                                autoClose: d.dialog.autoClose || 3000
+                            });
+                        }
+                    })
+                    .catch(() => {});
+            }, 300);
+        });
+
+        // 暴露全局
+        window.exportProjectToClipboard = exportProjectToClipboard;
+        window.showToast = showToast;
+        window.closeToast = closeToast;
+    })();
+</script>
+</body>
+</html>

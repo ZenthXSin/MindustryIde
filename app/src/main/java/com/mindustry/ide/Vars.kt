@@ -13,7 +13,7 @@ object Vars {
 
 
     fun init(context: Context) {
-        //确保ide工作目录存在
+        //确俚ide工作目录存在
         if (!ideWorkDirection.exists()) {
             ideWorkDirection.mkdirs()
         }

@@ -1,0 +1,211 @@
+/* ===== Toast Notification (手机消息提醒风格) ===== */
+
+/* 通知容器 - 固定在右上角 */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+    max-width: 420px;
+}
+
+/* 基础弹窗样式 */
+.toast-dialog {
+    min-width: 280px;
+    max-width: 420px;
+    background-color: var(--ide-bg-secondary, #3c3f41);
+    border: 1px solid var(--ide-border-primary, #555555);
+    border-radius: var(--ide-radius-sm, 3px);
+    box-shadow: var(--ide-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.4));
+    padding: var(--ide-space-sm, 4px) var(--ide-space-md, 8px);
+    opacity: 0;
+    transform: translateX(100%);
+    max-height: 0;
+    margin-bottom: -12px;
+    overflow: hidden;
+    transition: 
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--ide-space-sm, 4px);
+}
+
+.toast-dialog.show {
+    opacity: 1;
+    transform: translateX(0);
+    /* max-height 由 JavaScript 动态设置为实际内容高度 */
+    margin-bottom: 0;
+}
+
+.toast-dialog.hide {
+    opacity: 0;
+    transform: translateX(100%);
+    max-height: 0 !important;
+    margin-bottom: -12px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: none !important;
+}
+
+/* 弹窗内容 */
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--info);
+    border-radius: 50%;
+    color: white;
+}
+
+.toast-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.toast-title {
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.toast-message {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.toast-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: var(--ide-text-secondary, #808080);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 2px 4px;
+    margin: -2px;
+    width: 20px;
+    height: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+    border-radius: var(--ide-radius-sm, 3px);
+    transition: color 0.15s ease,
+                background-color 0.15s ease;
+}
+
+.toast-close:hover {
+    color: var(--ide-text-primary, #a9b7c6);
+    background-color: var(--ide-bg-hover, #3a3d40);
+}
+
+/* 不同类型样式 */
+.toast-success .toast-icon {
+    background-color: var(--success);
+}
+
+.toast-error .toast-icon {
+    background-color: var(--error);
+}
+
+.toast-warning .toast-icon {
+    background-color: var(--warning);
+}
+
+.toast-info .toast-icon {
+    background-color: var(--info);
+}
+
+/* 确认对话框特殊样式 */
+.toast-confirm {
+    min-width: 350px;
+    transform: translateY(10px) scale(0.95);
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.toast-confirm.show {
+    transform: translateY(0) scale(1);
+}
+
+.toast-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ide-space-sm, 4px);
+    margin-top: var(--ide-space-md, 8px);
+    padding-top: var(--ide-space-md, 8px);
+    border-top: 1px solid var(--ide-border-light, #515151);
+}
+
+.toast-btn {
+    padding: 6px 14px;
+    font-family: var(--ide-font-mono, 'JetBrains Mono', monospace);
+    font-size: var(--ide-font-size-md, 13px);
+    border: 1px solid var(--ide-border-primary, #555555);
+    border-radius: var(--ide-radius-sm, 3px);
+    cursor: pointer;
+    transition: background-color 0.1s ease,
+                transform 0.05s ease;
+    background-color: transparent;
+    color: var(--ide-text-primary, #a9b7c6);
+}
+
+.toast-btn:hover {
+    background-color: var(--ide-bg-tertiary, #45494a);
+}
+
+.toast-btn:active {
+    transform: scale(0.97);
+}
+
+.toast-btn-cancel {
+    color: var(--ide-text-secondary, #808080);
+}
+
+.toast-btn-cancel:hover {
+    color: var(--ide-text-primary, #a9b7c6);
+}
+
+.toast-btn-confirm {
+    background-color: var(--ide-accent-blue, #3574f0);
+    border-color: var(--ide-accent-blue, #3574f0);
+    color: white;
+    font-weight: 600;
+}
+
+.toast-btn-confirm:hover {
+    background-color: var(--ide-accent-blue-hover, #4a85f5);
+    border-color: var(--ide-accent-blue-hover, #4a85f5);
+}
+
+
