@@ -722,6 +722,7 @@
                     currentClassName = data.className || '';
                     renderBreadcrumb();  // 渲染面包屑
                     renderFieldList();
+                    // 有改动就重新渲染全部节点
                     renderCanvasCards();
                 } else {
                     showToast({ title: '错误', message: data.error || '获取字段失败', type: 'ERROR', autoClose: 3000 });
@@ -854,6 +855,7 @@
                 const data = await res.json();
                 if (data.success) {
                     showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
+                    // 字段添加后，重新获取数据并渲染全部节点
                     fetchFields();
                 } else {
                     showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
@@ -891,13 +893,16 @@
                 const data = await res.json();
                 if (data.success) {
                     showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
+                    // 字段更新后，重新获取数据并渲染全部节点
                     fetchFields();
                 } else {
                     showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
+                    // 即使失败也刷新数据
                     fetchFields();
                 }
             } catch (err) {
                 showToast({ title: '错误', message: '网络错误', type: 'ERROR', autoClose: 3000 });
+                // 网络错误也要刷新
                 fetchFields();
             }
         };
@@ -925,6 +930,7 @@
                 const data = await res.json();
                 if (data.success) {
                     showToast({ title: '成功', message: data.message, type: 'SUCCESS', autoClose: 1500 });
+                    // 字段删除后，重新获取数据并渲染全部节点
                     fetchFields();
                 } else {
                     showToast({ title: '错误', message: data.error, type: 'ERROR', autoClose: 3000 });
@@ -1114,13 +1120,19 @@
             return { x: startX + col * cardWidth, y: startY + row * cardHeight };
         }
 
+        /**
+         * 节点渲染函数 - 有改动就重新渲染全部
+         * 每次调用都会清空画布并重新创建所有节点
+         */
         function renderCanvasCards() {
+            // 清空画布上的所有节点
             const oldCards = document.querySelectorAll('.field-card-canvas');
             oldCards.forEach(card => card.remove());
 
             const container = document.getElementById('canvasContent');
             const total = addedFields.length;
 
+            // 重新渲染所有节点（包括位置、值、状态等）
             addedFields.forEach((field, index) => {
                 let pos;
                 
