@@ -34,7 +34,8 @@ jobs:
         continue-on-error: true
 
       - name: Build web jar
-        run: bash ./web/web/gradlew bootJar
+        working-directory: web/web
+        run: bash ./gradlew bootJar
         continue-on-error: true
 
       - name: List build outputs
