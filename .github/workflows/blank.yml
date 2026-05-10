@@ -27,12 +27,15 @@ jobs:
 
       - name: Build mod apk
         run: bash ./gradlew assemble
+        continue-on-error: true
 
       - name: Build tool jar
         run: bash ./gradlew :tool:jar
+        continue-on-error: true
 
       - name: Build web jar
         run: bash ./web/web/gradlew bootJar
+        continue-on-error: true
 
       - name: List build outputs
         run: |

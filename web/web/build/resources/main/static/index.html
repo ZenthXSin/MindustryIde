@@ -503,6 +503,10 @@
                 工具
             </button>
             
+            <button class="action-button" onclick="handleSettings()">
+                设置
+            </button>
+            
             <button class="action-button" onclick="handleMore()" id="moreBtn">
                 更多
             </button>
@@ -1207,6 +1211,11 @@
         function handleGithub() {
             console.log('Opening Github...');
             window.open('https://github.com/ZenthXSin/MindustryIde', '_blank');
+        }
+
+        function handleSettings() {
+            console.log('Opening settings...');
+            window.location.href = '/settings.html';
         }
 
         // 点击页面其他地方时自动收起

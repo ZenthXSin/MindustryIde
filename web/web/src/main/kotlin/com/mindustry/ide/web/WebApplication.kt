@@ -10,4 +10,6 @@ fun main(args: Array<String>) {
     Vars.init()
     runApplication<WebApplication>(*args)
     Runtime.getRuntime().exec("cmd /c start http://localhost:8080/")
+    Thread.sleep(1000)
+    println("服务器已在8080端口启动")
 }

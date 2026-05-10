@@ -11,7 +11,50 @@ import java.lang.reflect.Modifier
 import kotlin.jvm.java
 
 
-//TODO Seq<>的适配
+//TODO 数列的适配
+/**
+ * 判断字段是否为 Seq/Array 类型
+ * 支持：
+ * - arc.struct.Seq<T>
+ * - T[] (Java 数组)
+ * - java.util.List<T>
+ */
+fun Field.isSeqOrArrayType(): Boolean {
+    val typeName = type.name
+    return typeName == "arc.struct.Seq" || 
+           typeName.startsWith("[") || // Java 数组以 [ 开头
+           typeName == "java.util.List" ||
+           typeName == "java.util.ArrayList"
+}
+
+/**
+ * 解析 Seq/Array 的元素类型
+ * 例如：Seq<Block> -> Block, int[] -> int
+ */
+fun Field.getSeqElementType(): Class<*>? {
+    if (!isSeqOrArrayType()) return null
+    
+    // 处理 Java 数组
+    if (type.isArray) {
+        return type.componentType
+    }
+    
+    // 处理泛型类型（需要通过反射获取泛型参数）
+    try {
+        val genericType = genericType
+        if (genericType is java.lang.reflect.ParameterizedType) {
+            val actualTypeArgs = genericType.actualTypeArguments
+            if (actualTypeArgs.isNotEmpty() && actualTypeArgs[0] is Class<*>) {
+                return actualTypeArgs[0] as Class<*>
+            }
+        }
+    } catch (e: Exception) {
+        // 泛型信息在运行时可能被擦除
+    }
+    
+    return null
+}
+
 /**
  * 判断字段在 JSON 里是否"大概率必须写"
  *

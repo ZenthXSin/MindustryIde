@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 - Mindustry IDE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #2b2d30;
+            --bg-secondary: #3c3f41;
+            --bg-tertiary: #45494a;
+            --accent-blue: #3574f0;
+            --accent-blue-hover: #4a85f5;
+            --text-primary: #a9b7c6;
+            --text-secondary: #808080;
+            --border-color: #555555;
+            --success-color: #59a869;
+            --error-color: #ff4444;
+            --warning-color: #ffa500;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .back-button {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            transition: all 0.15s ease;
+        }
+
+        .back-button:hover {
+            background-color: var(--bg-secondary);
+            border-color: var(--accent-blue);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .settings-section {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .section-title {
+            padding: 16px 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background-color: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .setting-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.15s ease;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-item:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-label {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .setting-description {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* 开关样式 */
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: var(--text-secondary);
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+            background-color: white;
+        }
+
+        /* 输入框样式 */
+        .setting-input {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            width: 200px;
+            transition: border-color 0.15s ease;
+        }
+
+        .setting-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        /* 选择框样式 */
+        .setting-select {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            width: 200px;
+            cursor: pointer;
+            transition: border-color 0.15s ease;
+        }
+
+        .setting-select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        /* 按钮样式 */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-blue-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .btn-danger {
+            background-color: transparent;
+            color: var(--error-color);
+            border-color: var(--error-color);
+        }
+
+        .btn-danger:hover {
+            background-color: rgba(255, 68, 68, 0.1);
+        }
+
+        /* Toast 通知样式 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            max-width: 420px;
+        }
+
+        .toast-dialog {
+            min-width: 280px;
+            max-width: 420px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            padding: 12px 16px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast-dialog.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toast-icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+        }
+
+        .toast-success .toast-icon {
+            background-color: var(--success-color);
+        }
+
+        .toast-error .toast-icon {
+            background-color: var(--error-color);
+        }
+
+        .toast-warning .toast-icon {
+            background-color: var(--warning-color);
+        }
+
+        .toast-info .toast-icon {
+            background-color: var(--accent-blue);
+        }
+
+        .toast-text {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .toast-message {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 2px 4px;
+            margin: -2px;
+            width: 20px;
+            height: 20px;
+            line-height: 1;
+            flex-shrink: 0;
+            border-radius: 3px;
+            transition: color 0.15s ease,
+                        background-color 0.15s ease;
+        }
+
+        .toast-close:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="back-button" onclick="goBack()">← 返回</button>
+            <h1>设置</h1>
+        </div>
+
+        <!-- 外观设置 -->
+        <div class="settings-section">
+            <div class="section-title">外观</div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">深色主题</div>
+                    <div class="setting-description">使用深色界面主题</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="darkTheme" checked disabled>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">字体大小</div>
+                    <div class="setting-description">调整界面字体大小</div>
+                </div>
+                <select class="setting-select" id="fontSize">
+                    <option value="small">小</option>
+                    <option value="medium" selected>中</option>
+                    <option value="large">大</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 编辑器设置 -->
+        <div class="settings-section">
+            <div class="section-title">编辑器</div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">自动保存</div>
+                    <div class="setting-description">编辑时自动保存更改</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="autoSave" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">缩进大小</div>
+                    <div class="setting-description">JSON 文件的缩进空格数</div>
+                </div>
+                <input type="number" class="setting-input" id="indentSize" value="2" min="1" max="8">
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">显示行号</div>
+                    <div class="setting-description">在编辑器中显示行号</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="showLineNumbers" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 项目设置 -->
+        <div class="settings-section">
+            <div class="section-title">项目</div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">默认项目路径</div>
+                    <div class="setting-description">新项目的默认存储位置</div>
+                </div>
+                <input type="text" class="setting-input" id="defaultProjectPath" value="./projects" style="width: 300px;">
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">自动刷新</div>
+                    <div class="setting-description">文件变化时自动刷新项目</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="autoRefresh" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 高级设置 -->
+        <div class="settings-section">
+            <div class="section-title">高级</div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">启用调试模式</div>
+                    <div class="setting-description">显示详细的调试信息</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="debugMode">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">日志级别</div>
+                    <div class="setting-description">控制台日志的详细程度</div>
+                </div>
+                <select class="setting-select" id="logLevel">
+                    <option value="error">错误</option>
+                    <option value="warning">警告</option>
+                    <option value="info" selected>信息</option>
+                    <option value="debug">调试</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="action-buttons">
+            <button class="btn btn-danger" onclick="resetSettings()">重置为默认</button>
+            <button class="btn btn-secondary" onclick="cancelSettings()">取消</button>
+            <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+        </div>
+    </div>
+
+    <!-- Toast 通知容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // 加载设置
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('mindustryIdeSettings');
+            if (savedSettings) {
+                try {
+                    const settings = JSON.parse(savedSettings);
+                    
+                    // 应用设置到表单
+                    document.getElementById('fontSize').value = settings.fontSize || 'medium';
+                    document.getElementById('autoSave').checked = settings.autoSave !== false;
+                    document.getElementById('indentSize').value = settings.indentSize || 2;
+                    document.getElementById('showLineNumbers').checked = settings.showLineNumbers !== false;
+                    document.getElementById('defaultProjectPath').value = settings.defaultProjectPath || './projects';
+                    document.getElementById('autoRefresh').checked = settings.autoRefresh !== false;
+                    document.getElementById('debugMode').checked = settings.debugMode || false;
+                    document.getElementById('logLevel').value = settings.logLevel || 'info';
+                } catch (e) {
+                    console.error('加载设置失败:', e);
+                }
+            }
+        }
+
+        // 保存设置
+        function saveSettings() {
+            const settings = {
+                fontSize: document.getElementById('fontSize').value,
+                autoSave: document.getElementById('autoSave').checked,
+                indentSize: parseInt(document.getElementById('indentSize').value),
+                showLineNumbers: document.getElementById('showLineNumbers').checked,
+                defaultProjectPath: document.getElementById('defaultProjectPath').value,
+                autoRefresh: document.getElementById('autoRefresh').checked,
+                debugMode: document.getElementById('debugMode').checked,
+                logLevel: document.getElementById('logLevel').value
+            };
+
+            localStorage.setItem('mindustryIdeSettings', JSON.stringify(settings));
+            showToast('成功', '设置已保存', 'success');
+            
+            // 延迟返回主页
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+        }
+
+        // 取消设置
+        function cancelSettings() {
+            window.location.href = '/';
+        }
+
+        // 重置设置
+        function resetSettings() {
+            if (confirm('确定要重置所有设置为默认值吗？')) {
+                localStorage.removeItem('mindustryIdeSettings');
+                loadSettings();
+                showToast('成功', '设置已重置为默认值', 'success');
+            }
+        }
+
+        // 返回主页
+        function goBack() {
+            window.location.href = '/';
+        }
+
+        // 显示 Toast 通知
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast-dialog toast-${type}`;
+            
+            const iconMap = {
+                success: '✓',
+                error: '✕',
+                warning: '⚠',
+                info: 'ℹ'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <div class="toast-icon">${iconMap[type] || 'ℹ'}</div>
+                    <div class="toast-text">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+            `;
+
+            container.appendChild(toast);
+
+            // 触发动画
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            // 3秒后自动消失
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 250);
+            }, 3000);
+        }
+
+        // 页面加载时读取设置
+        window.addEventListener('DOMContentLoaded', loadSettings);
+    </script>
+</body>
+</html>
