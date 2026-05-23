@@ -8,12 +8,14 @@ import kotlinx.serialization.json.JsonElement
 import arc.util.Nullable
 import mindustry.world.Block
 import java.lang.reflect.Field
+import java.lang.reflect.GenericArrayType
 import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
+import java.lang.reflect.WildcardType
 import kotlin.jvm.java
 
 
-//TODO Seq<>的适配
 /**
  * 判断字段在 JSON 里是否"大概率必须写"
  *
@@ -113,8 +115,7 @@ class ClassBuild(
     var doc: String = "",
     var parentType: String = "",
     var fieldBuilds: MutableList<FieldBuild> = mutableListOf(),
-    var value: String = "",
-    var isArray: Boolean = false
+    var value: String = ""
 ) {
     init {
         doc = parser.getClassDoc(classData.name)
@@ -156,15 +157,11 @@ class ClassBuild(
 
         // 如果没有子字段，输出 null（基本类型或空对象）
         if (fieldBuilds.isEmpty()) {
-            return if (isArray) "[]" else "null"
+            return "null"
         }
 
-        // 区分数组/对象输出
-        val (open, close) = if (isArray) "[\n" to "\n]" else "{\n" to "\n}"
-        var ret = open
-        if (!isArray) {
-            ret += "\"type\": \"$name\"" + if (fieldBuilds.isEmpty()) "\n" else ",\n"
-        }
+        var ret = "{\n"
+        ret += "\"type\": \"$name\"" + if (fieldBuilds.isEmpty()) "\n" else ",\n"
         for (fieldBuild in fieldBuilds) {
             ret += fieldBuild.toJson() + if (fieldBuild != fieldBuilds.last()) {
                 ",\n"
@@ -172,7 +169,7 @@ class ClassBuild(
                 "\n"
             }
         }
-        return "$ret$close"
+        return ret + "}"
     }
 
     fun getMeta(): ClassMeta {
@@ -213,31 +210,20 @@ class FieldBuild(
     }
 
     val arrayElementType: Class<*> by lazy {
-        val t = field.type
-        when {
-            t.isArray -> t.componentType
-            Seq::class.java.isAssignableFrom(t) || Collection::class.java.isAssignableFrom(t) -> {
-                val generic = field.genericType
-                if (generic is ParameterizedType) {
-                    val arg = generic.actualTypeArguments.firstOrNull()
-                    when (arg) {
-                        is Class<*> -> arg
-                        is ParameterizedType -> arg.rawType as? Class<*> ?: Any::class.java
-                        else -> Any::class.java
-                    }
-                } else Any::class.java
-            }
-            else -> Any::class.java
-        }
+        resolveArrayElementClass(field)
     }
 
-    var value = Value(getDefaultForClass(field.type), ClassBuild(field.type, parser))
+    var value = Value(
+        getDefaultForClass(if (isArrayType) arrayElementType else field.type),
+        ClassBuild(if (isArrayType) arrayElementType else field.type, parser),
+        isArray = isArrayType
+    )
 
     init {
         if (isArrayType) {
             classData = arrayElementType
         }
-        doc = parser.getFieldDoc(classData.name, field.name)
+        doc = parser.getFieldDoc(field.declaringClass.name, field.name)
     }
 
     @Serializable
@@ -272,6 +258,27 @@ class FieldBuild(
         fun getDefaultForClass(clazz: Class<*>): String {
             return defaultValues[clazz]?.invoke() ?: "null"
         }
+
+        fun resolveArrayElementClass(field: Field): Class<*> {
+            val fieldClass = field.type
+            return when {
+                fieldClass.isArray -> fieldClass.componentType
+                Seq::class.java.isAssignableFrom(fieldClass) || Collection::class.java.isAssignableFrom(fieldClass) -> {
+                    resolveTypeClass((field.genericType as? ParameterizedType)?.actualTypeArguments?.firstOrNull())
+                }
+                else -> Any::class.java
+            }
+        }
+
+        private fun resolveTypeClass(type: Type?): Class<*> {
+            return when (type) {
+                is Class<*> -> type
+                is ParameterizedType -> type.rawType as? Class<*> ?: Any::class.java
+                is GenericArrayType -> java.lang.reflect.Array.newInstance(resolveTypeClass(type.genericComponentType), 0).javaClass
+                is WildcardType -> resolveTypeClass(type.upperBounds.firstOrNull())
+                else -> Any::class.java
+            }
+        }
     }
 }
 
@@ -285,9 +292,13 @@ class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> Strin
 
     fun toJson(): String {
         return run(this) ?: when {
-            // 数组分支：typeValue 是 ClassBuild 且 isArray=true，输出 [ ... ]
-            isArray && typeValue is ClassBuild -> {
-                "[ ${(typeValue as ClassBuild).toJson()} ]"
+            // 数组/Seq/Collection 字段：输出数组，元素模板由 typeValue 决定。
+            isArray -> {
+                val element = when (typeValue) {
+                    is ClassBuild -> (typeValue as ClassBuild).toJson()
+                    else -> typeValue?.toString() ?: "null"
+                }
+                if (element == "null") "[]" else "[ $element ]"
             }
             // 值非空且不为 "null"：可能是布尔、数字或普通字符串
             value.isNotEmpty() && value != "null" -> {
