@@ -1,6 +1,7 @@
 package com.mindustry.ide.tool.json
 
 import arc.struct.ObjectMap
+import arc.struct.Seq
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -8,6 +9,7 @@ import arc.util.Nullable
 import mindustry.world.Block
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
+import java.lang.reflect.ParameterizedType
 import kotlin.jvm.java
 
 
@@ -111,7 +113,8 @@ class ClassBuild(
     var doc: String = "",
     var parentType: String = "",
     var fieldBuilds: MutableList<FieldBuild> = mutableListOf(),
-    var value: String = ""
+    var value: String = "",
+    var isArray: Boolean = false
 ) {
     init {
         doc = parser.getClassDoc(classData.name)
@@ -150,15 +153,18 @@ class ClassBuild(
                 "\"$value\""
             }
         }
-        
+
         // 如果没有子字段，输出 null（基本类型或空对象）
         if (fieldBuilds.isEmpty()) {
-            return "null"
+            return if (isArray) "[]" else "null"
         }
-        
-        // 有子字段，输出对象结构
-        var ret = "{\n"
-        ret += "\"type\": \"$name\"" + if (fieldBuilds.isEmpty()) "\n" else ",\n"
+
+        // 区分数组/对象输出
+        val (open, close) = if (isArray) "[\n" to "\n]" else "{\n" to "\n}"
+        var ret = open
+        if (!isArray) {
+            ret += "\"type\": \"$name\"" + if (fieldBuilds.isEmpty()) "\n" else ",\n"
+        }
         for (fieldBuild in fieldBuilds) {
             ret += fieldBuild.toJson() + if (fieldBuild != fieldBuilds.last()) {
                 ",\n"
@@ -166,7 +172,7 @@ class ClassBuild(
                 "\n"
             }
         }
-        return "$ret}"
+        return "$ret$close"
     }
 
     fun getMeta(): ClassMeta {
@@ -199,9 +205,38 @@ class FieldBuild(
     var classData: Class<*> = field.type,
     var doc: String = ""
 ) {
+    val isArrayType: Boolean by lazy {
+        val t = field.type
+        t.isArray ||
+            Seq::class.java.isAssignableFrom(t) ||
+            Collection::class.java.isAssignableFrom(t)
+    }
+
+    val arrayElementType: Class<*> by lazy {
+        val t = field.type
+        when {
+            t.isArray -> t.componentType
+            Seq::class.java.isAssignableFrom(t) || Collection::class.java.isAssignableFrom(t) -> {
+                val generic = field.genericType
+                if (generic is ParameterizedType) {
+                    val arg = generic.actualTypeArguments.firstOrNull()
+                    when (arg) {
+                        is Class<*> -> arg
+                        is ParameterizedType -> arg.rawType as? Class<*> ?: Any::class.java
+                        else -> Any::class.java
+                    }
+                } else Any::class.java
+            }
+            else -> Any::class.java
+        }
+    }
+
     var value = Value(getDefaultForClass(field.type), ClassBuild(field.type, parser))
 
     init {
+        if (isArrayType) {
+            classData = arrayElementType
+        }
         doc = parser.getFieldDoc(classData.name, field.name)
     }
 
@@ -240,7 +275,7 @@ class FieldBuild(
     }
 }
 
-class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> String? = { null }) {
+class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> String? = { null }, var isArray: Boolean = false) {
     @Serializable
     data class ValueMeta(var value: String, var typeValue: ClassBuild.ClassMeta)
 
@@ -250,6 +285,10 @@ class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> Strin
 
     fun toJson(): String {
         return run(this) ?: when {
+            // 数组分支：typeValue 是 ClassBuild 且 isArray=true，输出 [ ... ]
+            isArray && typeValue is ClassBuild -> {
+                "[ ${(typeValue as ClassBuild).toJson()} ]"
+            }
             // 值非空且不为 "null"：可能是布尔、数字或普通字符串
             value.isNotEmpty() && value != "null" -> {
                 if (value.isBooleanString()) value
@@ -262,11 +301,11 @@ class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> Strin
                 // 判断是否为基本类型或常见包装类
                 val isPrimitiveType = classBuild.classData.isPrimitive ||
                     classBuild.classData.simpleName in listOf(
-                        "String", "Boolean", "Integer", "Float", "Double", 
+                        "String", "Boolean", "Integer", "Float", "Double",
                         "Long", "Short", "Byte", "Character"
                     ) ||
                     classBuild.classData.name.startsWith("java.lang")
-                
+
                 if (isPrimitiveType) {
                     // 基本类型：输出 null
                     "null"
