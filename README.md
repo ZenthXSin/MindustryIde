@@ -6,8 +6,6 @@
 - [Eve-aic.md](Eve-aic.md)
 - [NEXT_STEPS.md](NEXT_STEPS.md)
 - [Tool 模块文档](tool/README.md)
-- [Web 自动布局功能](web/AUTO_LAYOUT_FEATURE.md)
-- [Web HELP](web/web/HELP.md)
 - [Git 提交规范](.github/git-commit-instructions.md)
 
 

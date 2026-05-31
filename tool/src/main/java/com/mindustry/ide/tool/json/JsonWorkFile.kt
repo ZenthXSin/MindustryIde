@@ -3,7 +3,11 @@ package com.mindustry.ide.tool.json
 import arc.struct.ObjectMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import arc.util.Nullable
 import mindustry.world.Block
 import java.lang.reflect.Field
@@ -110,15 +114,68 @@ class JsonWorkFile(
     }
 
     override fun import(content: String) {
-        TODO("Not yet implemented")
+        val root = try {
+            Json.parseToJsonElement(content)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("import: 非法 JSON: ${e.message}", e)
+        }
+        if (root !is JsonObject) {
+            throw IllegalArgumentException("import: 根元素必须是 JSON 对象")
+        }
+        classBuild = buildClassBuildFromJson(root, defaultType = Block::class.java)
     }
 
-    override fun export(): String {
-        TODO("Not yet implemented")
+    private fun buildClassBuildFromJson(obj: JsonObject, defaultType: Class<*>): ClassBuild {
+        val typeName = (obj["type"] as? JsonPrimitive)?.contentOrNull
+        val cls = typeName?.let { parser.classMap?.get(it) } ?: defaultType
+        val cb = ClassBuild(cls, parser)
+        for ((key, element) in obj) {
+            if (key == "type") continue
+            val field = cls.fields.firstOrNull { it.name == key } ?: continue
+            val fb = FieldBuild(field, parser)
+            applyJsonToFieldBuild(fb, element, field)
+            cb.addFieldBuild { fb }
+        }
+        return cb
     }
+
+    private fun applyJsonToFieldBuild(fb: FieldBuild, element: JsonElement, field: Field) {
+        when (element) {
+            is JsonPrimitive -> {
+                fb.value.value = element.contentOrNull ?: ""
+                fb.value.elements = null
+            }
+            is JsonObject -> {
+                val nested = buildClassBuildFromJson(element, defaultType = field.type)
+                fb.value.value = ""
+                fb.value.typeValue = nested
+                fb.value.elements = null
+            }
+            is JsonArray -> {
+                val elemType = field.getSeqElementType() ?: Any::class.java
+                val list = mutableListOf<ClassBuild>()
+                for (item in element) {
+                    when (item) {
+                        is JsonObject -> list.add(buildClassBuildFromJson(item, defaultType = elemType))
+                        is JsonPrimitive -> {
+                            val leaf = ClassBuild(elemType, parser)
+                            leaf.value = item.contentOrNull ?: ""
+                            list.add(leaf)
+                        }
+                        else -> { /* 嵌套数组暂不支持 */ }
+                    }
+                }
+                fb.value.value = ""
+                fb.value.elements = list
+            }
+        }
+    }
+
+    override fun export(): String = getContent()
 
     override fun init() {
-        TODO("Not yet implemented")
+        classBuild = ClassBuild(Block::class.java, parser)
+        data = com.mindustry.ide.tool.WorkFileData(fileName = name, fileExtension = "json")
     }
 
     override fun getContent(): String {
@@ -218,8 +275,8 @@ class ClassBuild(
 
     fun getAllFields(): List<Field> = classData.fields.toList()
 
-    fun getFieldByName(name: String): Field {
-        return classData.fields.firstOrNull { it.name == name } ?: classData.fields.random()
+    fun getFieldByName(name: String): Field? {
+        return classData.fields.firstOrNull { it.name == name }
     }
 
     fun getFieldBuildByName(name: String): FieldBuild? {
@@ -246,6 +303,14 @@ class FieldBuild(
 
     init {
         doc = parser.getFieldDoc(classData.name, field.name)
+        if (field.isSeqOrArrayType()) {
+            val elemType = field.getSeqElementType()
+            if (elemType != null) {
+                value.elements = mutableListOf()
+                value.typeValue = ClassBuild(elemType, parser)
+                value.value = ""
+            }
+        }
     }
 
     @Serializable
@@ -284,6 +349,13 @@ class FieldBuild(
 }
 
 class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> String? = { null }) {
+    var elements: MutableList<ClassBuild>? = null
+
+    fun addElement(build: ClassBuild) {
+        if (elements == null) elements = mutableListOf()
+        elements!!.add(build)
+    }
+
     @Serializable
     data class ValueMeta(var value: String, var typeValue: ClassBuild.ClassMeta)
 
@@ -293,6 +365,12 @@ class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> Strin
 
     fun toJson(): String {
         return run(this) ?: when {
+            // Seq/Array：优先发出 JSON 数组（即使为空也输出 [] 而非 null）
+            elements != null -> {
+                val list = elements!!
+                if (list.isEmpty()) "[]"
+                else list.joinToString(prefix = "[", postfix = "]", separator = ", ") { it.toJson() }
+            }
             // 值非空且不为 "null"：可能是布尔、数字或普通字符串
             value.isNotEmpty() && value != "null" -> {
                 if (value.isBooleanString()) value
@@ -305,11 +383,11 @@ class Value<T>(var value: String, var typeValue: T, var run: (Value<T>) -> Strin
                 // 判断是否为基本类型或常见包装类
                 val isPrimitiveType = classBuild.classData.isPrimitive ||
                     classBuild.classData.simpleName in listOf(
-                        "String", "Boolean", "Integer", "Float", "Double", 
+                        "String", "Boolean", "Integer", "Float", "Double",
                         "Long", "Short", "Byte", "Character"
                     ) ||
                     classBuild.classData.name.startsWith("java.lang")
-                
+
                 if (isPrimitiveType) {
                     // 基本类型：输出 null
                     "null"

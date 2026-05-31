@@ -18,4 +18,7 @@ dependencies {
     
     // Jsoup for HTML parsing
     implementation("org.jsoup:jsoup:1.22.2")
+
+    // WebSocket Server
+    implementation("org.java-websocket:Java-WebSocket:1.5.7")
 }

@@ -142,3 +142,5 @@ val editor = MyJsonEditor(myParser)
 - `DetectingContentParser.kt` 目前为空文件，需要根据需求实现
 - `JsonWorkFile.import()` 和 `export()` 方法尚未实现
 - `JsonParser.load()` 方法需要在子类中实现具体逻辑
+
+## JsonApi的ws服务器规范

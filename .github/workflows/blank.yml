@@ -33,19 +33,12 @@ jobs:
         run: bash ./gradlew :tool:jar
         continue-on-error: true
 
-      - name: Build web jar
-        working-directory: web/web
-        run: bash ./gradlew bootJar
-        continue-on-error: true
-
       - name: List build outputs
         run: |
           echo "=== APK Files ==="
           ls -la app/build/outputs/apk/
           echo "\n=== Tool JAR ==="
           ls -la tool/build/libs/
-          echo "\n=== Web JAR ==="
-          ls -la web/web/build/libs/
 
       - name: Upload built files (Artifact)
         uses: actions/upload-artifact@v4
@@ -54,7 +47,6 @@ jobs:
           path: |
             app/build/outputs/apk/*.apk
             tool/build/libs/tool.jar
-            web/web/build/libs/*.jar
 
       - name: Generate safe tag and release info
         id: release_info
@@ -102,7 +94,6 @@ jobs:
           files: |
             app/build/outputs/apk/release/*.apk
             tool/build/libs/*.jar
-            web/web/build/libs/*.jar
           generate_release_notes: true
           prerelease: true
         env:

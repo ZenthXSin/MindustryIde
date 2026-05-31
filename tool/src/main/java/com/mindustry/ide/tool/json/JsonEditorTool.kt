@@ -4,10 +4,11 @@ import arc.struct.ObjectMap
 import arc.util.Nullable
 
 /**Json编辑工具封装，需实现日志输出*/
-abstract class JsonEditorTool(val parser: IJsonParser) {
+abstract class JsonEditorTool(val parser: JsonParser) {
     abstract fun error(message: String)
     abstract fun info(message: String)
     abstract fun warning(message: String)
+    abstract fun debug(message: String)
 
     fun getClassByName(name: String): Class<*> {
         val ret = parser.classMap?.get(name)
