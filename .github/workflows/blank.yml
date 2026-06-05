@@ -20,22 +20,6 @@ jobs:
           distribution: 'temurin'
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
-<<<<<<< Updated upstream
-      - name: Build mod apk
-        run: bash ./gradlew assemble
-
-      - name: Build tool jar
-        run: bash ./gradlew :tool:jar
-
-      - name: Build web jar
-        working-directory: web/web
-        run: bash ./gradlew bootJar
-=======
-      - name: Build tool jar
-        run: bash ./gradlew :tool:jar
->>>>>>> Stashed changes
-
       - name: List build outputs
         run: |
           echo "=== Tool JAR ==="
@@ -48,14 +32,7 @@ jobs:
         with:
           name: ${{ github.event.repository.name }}-builds
           path: |
-<<<<<<< Updated upstream
-            app/build/outputs/apk/*.apk
-            tool/build/libs/tool.jar
-            web/web/build/libs/*.jar
-=======
             tool/build/libs/*.jar
->>>>>>> Stashed changes
-
       - name: Generate safe tag and release info
         id: release_info
         shell: bash
