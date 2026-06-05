@@ -1,0 +1,776 @@
+[
+  {
+    "repo": "arc",
+    "package": "arc",
+    "page": "knowledge/mindustry-package-analysis/arc-arc.md",
+    "files": 9
+  },
+  {
+    "repo": "arc",
+    "package": "arc.<default>",
+    "page": "knowledge/mindustry-package-analysis/arc-arc--default.md",
+    "files": 49
+  },
+  {
+    "repo": "arc",
+    "package": "arc.assets",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-assets.md",
+    "files": 6
+  },
+  {
+    "repo": "arc",
+    "package": "arc.assets.loaders",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-assets-loaders.md",
+    "files": 14
+  },
+  {
+    "repo": "arc",
+    "package": "arc.audio",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-audio.md",
+    "files": 9
+  },
+  {
+    "repo": "arc",
+    "package": "arc.backend.android",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-backend-android.md",
+    "files": 10
+  },
+  {
+    "repo": "arc",
+    "package": "arc.backend.android.surfaceview",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-backend-android-surfaceview.md",
+    "files": 6
+  },
+  {
+    "repo": "arc",
+    "package": "arc.backend.headless",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-backend-headless.md",
+    "files": 1
+  },
+  {
+    "repo": "arc",
+    "package": "arc.backend.robovm",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-backend-robovm.md",
+    "files": 13
+  },
+  {
+    "repo": "arc",
+    "package": "arc.backend.robovm.custom",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-backend-robovm-custom.md",
+    "files": 5
+  },
+  {
+    "repo": "arc",
+    "package": "arc.backend.sdl",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-backend-sdl.md",
+    "files": 18
+  },
+  {
+    "repo": "arc",
+    "package": "arc.backend.sdl.jni",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-backend-sdl-jni.md",
+    "files": 2
+  },
+  {
+    "repo": "arc",
+    "package": "arc.discord",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-discord.md",
+    "files": 1
+  },
+  {
+    "repo": "arc",
+    "package": "arc.filedialogs",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-filedialogs.md",
+    "files": 1
+  },
+  {
+    "repo": "arc",
+    "package": "arc.files",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-files.md",
+    "files": 2
+  },
+  {
+    "repo": "arc",
+    "package": "arc.flabel",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-flabel.md",
+    "files": 6
+  },
+  {
+    "repo": "arc",
+    "package": "arc.flabel.effects",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-flabel-effects.md",
+    "files": 10
+  },
+  {
+    "repo": "arc",
+    "package": "arc.freetype",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-freetype.md",
+    "files": 4
+  },
+  {
+    "repo": "arc",
+    "package": "arc.func",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-func.md",
+    "files": 27
+  },
+  {
+    "repo": "arc",
+    "package": "arc.fx",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-fx.md",
+    "files": 2
+  },
+  {
+    "repo": "arc",
+    "package": "arc.fx.filters",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-fx-filters.md",
+    "files": 28
+  },
+  {
+    "repo": "arc",
+    "package": "arc.fx.util",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-fx-util.md",
+    "files": 4
+  },
+  {
+    "repo": "arc",
+    "package": "arc.gif",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-gif.md",
+    "files": 1
+  },
+  {
+    "repo": "arc",
+    "package": "arc.graphics",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-graphics.md",
+    "files": 19
+  },
+  {
+    "repo": "arc",
+    "package": "arc.graphics.g2d",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-graphics-g2d.md",
+    "files": 21
+  },
+  {
+    "repo": "arc",
+    "package": "arc.graphics.g3d",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-graphics-g3d.md",
+    "files": 3
+  },
+  {
+    "repo": "arc",
+    "package": "arc.graphics.gl",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-graphics-gl.md",
+    "files": 23
+  },
+  {
+    "repo": "arc",
+    "package": "arc.input",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-input.md",
+    "files": 7
+  },
+  {
+    "repo": "arc",
+    "package": "arc.maps",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-maps.md",
+    "files": 10
+  },
+  {
+    "repo": "arc",
+    "package": "arc.maps.loaders",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-maps-loaders.md",
+    "files": 4
+  },
+  {
+    "repo": "arc",
+    "package": "arc.maps.objects",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-maps-objects.md",
+    "files": 7
+  },
+  {
+    "repo": "arc",
+    "package": "arc.math",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-math.md",
+    "files": 14
+  },
+  {
+    "repo": "arc",
+    "package": "arc.math.geom",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-math-geom.md",
+    "files": 35
+  },
+  {
+    "repo": "arc",
+    "package": "arc.mock",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-mock.md",
+    "files": 7
+  },
+  {
+    "repo": "arc",
+    "package": "arc.net",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-net.md",
+    "files": 16
+  },
+  {
+    "repo": "arc",
+    "package": "arc.net.dns",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-net-dns.md",
+    "files": 6
+  },
+  {
+    "repo": "arc",
+    "package": "arc.packer",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-packer.md",
+    "files": 7
+  },
+  {
+    "repo": "arc",
+    "package": "arc.profiling",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-profiling.md",
+    "files": 5
+  },
+  {
+    "repo": "arc",
+    "package": "arc.scene",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-scene.md",
+    "files": 4
+  },
+  {
+    "repo": "arc",
+    "package": "arc.scene.actions",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-scene-actions.md",
+    "files": 33
+  },
+  {
+    "repo": "arc",
+    "package": "arc.scene.event",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-scene-event.md",
+    "files": 17
+  },
+  {
+    "repo": "arc",
+    "package": "arc.scene.style",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-scene-style.md",
+    "files": 8
+  },
+  {
+    "repo": "arc",
+    "package": "arc.scene.ui",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-scene-ui.md",
+    "files": 17
+  },
+  {
+    "repo": "arc",
+    "package": "arc.scene.ui.layout",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-scene-ui-layout.md",
+    "files": 7
+  },
+  {
+    "repo": "arc",
+    "package": "arc.scene.utils",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-scene-utils.md",
+    "files": 4
+  },
+  {
+    "repo": "arc",
+    "package": "arc.struct",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-struct.md",
+    "files": 34
+  },
+  {
+    "repo": "arc",
+    "package": "arc.util",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-util.md",
+    "files": 38
+  },
+  {
+    "repo": "arc",
+    "package": "arc.util.io",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-util-io.md",
+    "files": 12
+  },
+  {
+    "repo": "arc",
+    "package": "arc.util.noise",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-util-noise.md",
+    "files": 5
+  },
+  {
+    "repo": "arc",
+    "package": "arc.util.pooling",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-util-pooling.md",
+    "files": 2
+  },
+  {
+    "repo": "arc",
+    "package": "arc.util.serialization",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-util-serialization.md",
+    "files": 11
+  },
+  {
+    "repo": "arc",
+    "package": "arc.util.viewport",
+    "page": "knowledge/mindustry-package-analysis/arc-arc-util-viewport.md",
+    "files": 7
+  },
+  {
+    "repo": "arc",
+    "package": "com.badlogic.gdx.backends.iosrobovm.bindings.metalangle",
+    "page": "knowledge/mindustry-package-analysis/arc-com-badlogic-gdx-backends-iosrobovm-bindings-metalangle.md",
+    "files": 15
+  },
+  {
+    "repo": "arc",
+    "package": "math",
+    "page": "knowledge/mindustry-package-analysis/arc-math.md",
+    "files": 9
+  },
+  {
+    "repo": "arc",
+    "package": "utils",
+    "page": "knowledge/mindustry-package-analysis/arc-utils.md",
+    "files": 3
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry.md",
+    "files": 2
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.<default>",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry--default.md",
+    "files": 317
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.ai",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-ai.md",
+    "files": 13
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.ai.types",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-ai-types.md",
+    "files": 16
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.android",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-android.md",
+    "files": 2
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.annotations",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-annotations.md",
+    "files": 2
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.annotations.entity",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-annotations-entity.md",
+    "files": 2
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.annotations.impl",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-annotations-impl.md",
+    "files": 2
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.annotations.misc",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-annotations-misc.md",
+    "files": 2
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.annotations.remote",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-annotations-remote.md",
+    "files": 4
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.annotations.util",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-annotations-util.md",
+    "files": 6
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.async",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-async.md",
+    "files": 4
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.audio",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-audio.md",
+    "files": 3
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.content",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-content.md",
+    "files": 15
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.core",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-core.md",
+    "files": 13
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.ctype",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-ctype.md",
+    "files": 4
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.desktop",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-desktop.md",
+    "files": 2
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.desktop.steam",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-desktop-steam.md",
+    "files": 5
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.editor",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-editor.md",
+    "files": 22
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.entities",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-entities.md",
+    "files": 17
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.entities.abilities",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-entities-abilities.md",
+    "files": 16
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.entities.bullet",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-entities-bullet.md",
+    "files": 26
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.entities.comp",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-entities-comp.md",
+    "files": 48
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.entities.effect",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-entities-effect.md",
+    "files": 8
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.entities.part",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-entities-part.md",
+    "files": 7
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.entities.pattern",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-entities-pattern.md",
+    "files": 8
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.entities.units",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-entities-units.md",
+    "files": 5
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.game",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-game.md",
+    "files": 21
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.graphics",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-graphics.md",
+    "files": 24
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.graphics.g3d",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-graphics-g3d.md",
+    "files": 14
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.input",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-input.md",
+    "files": 6
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.io",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-io.md",
+    "files": 8
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.io.versions",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-io-versions.md",
+    "files": 16
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.ios",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-ios.md",
+    "files": 1
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.logic",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-logic.md",
+    "files": 33
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.maps",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-maps.md",
+    "files": 6
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.maps.filters",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-maps-filters.md",
+    "files": 18
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.maps.generators",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-maps-generators.md",
+    "files": 6
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.maps.planet",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-maps-planet.md",
+    "files": 4
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.mod",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-mod.md",
+    "files": 11
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.net",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-net.md",
+    "files": 15
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.server",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-server.md",
+    "files": 2
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.service",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-service.md",
+    "files": 3
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.tools",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-tools.md",
+    "files": 5
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.type",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-type.md",
+    "files": 20
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.type.unit",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-type-unit.md",
+    "files": 4
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.type.weapons",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-type-weapons.md",
+    "files": 5
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.type.weather",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-type-weather.md",
+    "files": 4
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.ui",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-ui.md",
+    "files": 16
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.ui.dialogs",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-ui-dialogs.md",
+    "files": 38
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.ui.fragments",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-ui-fragments.md",
+    "files": 13
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.ui.layout",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-ui-layout.md",
+    "files": 4
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world.md",
+    "files": 12
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks.md",
+    "files": 10
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.campaign",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-campaign.md",
+    "files": 3
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.defense",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-defense.md",
+    "files": 15
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.defense.turrets",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-defense-turrets.md",
+    "files": 12
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.distribution",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-distribution.md",
+    "files": 20
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.environment",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-environment.md",
+    "files": 25
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.heat",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-heat.md",
+    "files": 4
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.legacy",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-legacy.md",
+    "files": 4
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.liquid",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-liquid.md",
+    "files": 6
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.logic",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-logic.md",
+    "files": 7
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.payloads",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-payloads.md",
+    "files": 14
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.power",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-power.md",
+    "files": 17
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.production",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-production.md",
+    "files": 14
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.sandbox",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-sandbox.md",
+    "files": 6
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.storage",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-storage.md",
+    "files": 3
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.blocks.units",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-blocks-units.md",
+    "files": 10
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.consumers",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-consumers.md",
+    "files": 24
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.draw",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-draw.md",
+    "files": 36
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.meta",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-meta.md",
+    "files": 12
+  },
+  {
+    "repo": "mindustry",
+    "package": "mindustry.world.modules",
+    "page": "knowledge/mindustry-package-analysis/mindustry-mindustry-world-modules.md",
+    "files": 4
+  },
+  {
+    "repo": "mindustry",
+    "package": "power",
+    "page": "knowledge/mindustry-package-analysis/mindustry-power.md",
+    "files": 4
+  }
+]

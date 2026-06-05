@@ -1,7 +1,8 @@
-# 一个Midnustry mod 编辑器
+# Mindustry Mod Ide Tools
 
-## [点我查看使用方法](readme/HowToUse.md)
+Mindustry模组编辑器后端
 
+<<<<<<< Updated upstream
 ## 其他
 - [Eve-aic.md](Eve-aic.md)
 - [NEXT_STEPS.md](NEXT_STEPS.md)
@@ -26,3 +27,6 @@
 如果你是Eve.aic，那请您去看Eve-aic.md
 
 author:zxs, 鱼雷，Eve.aic
+=======
+提供了ws连接进行交互
+>>>>>>> Stashed changes

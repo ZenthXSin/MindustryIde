@@ -1,16 +1,29 @@
-# 📱 Android 使用方法
+# 💻 使用方法
 
-## 方式一：APK 安装（更新较慢）
+适用于 Windows、macOS、Linux、Android (通过 Termux) 等系统。
 
-直接下载并安装 `.apk` 文件即可使用。
+### 前置要求
 
-> ⚠️ **注意**：如果安装时提示签名问题，可能需要手动对 APK 进行签名。
+- ✅ Java Development Kit (JDK) 21 或更高版本
+
+### 运行步骤
+
+1. **下载 JAR 包**
+   - 从 Release 页面下载最新的 `tool-xxx.jar` 文件
+
+2. **运行应用**
+   ```bash
+   java -jar tool-xxx.jar
+   ```
+
+3. **访问应用**
+   - 打开浏览器访问：`http://localhost:8080`
 
 ---
 
-## 方式二：Web 版本运行(最新最热)
+## 📱 在 Android 上运行
 
-通过 Termux 在 Android 设备上运行 Web 服务器：
+通过 Termux 在 Android 设备上运行：
 
 ### 步骤
 
@@ -22,40 +35,13 @@
    pkg install openjdk-21
    ```
 
-3. **下载 Web JAR 包**
-   - 从 Release 页面下载 `web-xxx-xxx.jar` 文件
-
-4. **运行服务**
+3. **下载并运行 JAR 包**
    ```bash
-   java -jar web-xxx-xxx.jar
+   java -jar tool-xxx.jar
    ```
 
-5. **访问应用**
+4. **访问应用**
    - 打开浏览器访问：`http://localhost:8080`
-
----
-
-# 💻 其他设备使用方法
-
-适用于 Windows、macOS、Linux 等桌面系统。
-
-### 前置要求
-
-- ✅ Java Development Kit (JDK) 21 或更高版本
-
-### 运行步骤
-
-1. **下载 JAR 包**
-   - 从 Release 页面下载最新的 `web-xxx-xxx.jar` 文件
-
-2. **运行应用**
-   ```bash
-   java -jar web-xxx-xxx.jar
-   ```
-
-3. **访问应用**
-   - 应用会自动在浏览器中打开 `http://localhost:8080`
-   - 如果未自动打开，请手动访问上述地址
 
 ---
 
@@ -70,7 +56,7 @@ java -version
 ### Q: 端口被占用怎么办？
 可以在启动时指定其他端口：
 ```bash
-java -jar web-xxx-xxx.jar --server.port=8081
+java -jar tool-xxx.jar --server.port=8081
 ```
 
 ### Q: 如何停止服务？

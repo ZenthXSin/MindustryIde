@@ -1,7 +1,10 @@
 // Top-level build file where you can add configuration options common to all subprojects/modules.
 plugins {
+<<<<<<< Updated upstream
     id("com.android.application") version "8.12.0" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.3.21" apply false
+=======
+>>>>>>> Stashed changes
     id("org.jetbrains.kotlin.jvm") version "2.3.21" apply false
 }
 

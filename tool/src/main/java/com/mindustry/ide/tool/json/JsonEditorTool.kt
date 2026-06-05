@@ -62,7 +62,8 @@ abstract class JsonEditorTool(val parser: IJsonParser) {
                         FieldBuild(it, parser)
                     })
             )
-        }}
+        }
+    }
 
     fun setFieldBuild(name: String, set: FieldBuild.() -> Unit) {
         val fieldBuild = jsonWorkFile.classBuild.getFieldBuildByName(name)
@@ -74,7 +75,12 @@ abstract class JsonEditorTool(val parser: IJsonParser) {
     }
 }
 
-class ClassData(var name: String, val parser: IJsonParser, var doc: String = "", var classData: Class<*> = Nullable::class.java) {
+class ClassData(
+    var name: String,
+    val parser: IJsonParser,
+    var doc: String = "",
+    var classData: Class<*> = Nullable::class.java
+) {
     init {
         classData = parser.classMap?.get(name) ?: Nullable::class.java
         doc = parser.getClassDoc(name)
